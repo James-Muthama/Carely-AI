@@ -3,10 +3,10 @@
 {% block content %}
 
 <header>
-    <a href="{{ url_for('home') }}"><h1>Carely</h1></a>
+    <a href="{{ url_for('main.home') }}"><h1>Carely</h1></a>
     <nav>
-        <a href="{{ url_for('sign_out') }}">About</a> |
-        <a href="{{ url_for('sign_out') }}">Logout</a>
+        <a href="{{ url_for('auth.sign_out') }}">About</a> |
+        <a href="{{ url_for('auth.sign_out') }}">Logout</a>
     </nav>
 </header>
 
@@ -22,7 +22,7 @@
 <div class="card">
     <h1>Verification Code</h1>
 
-    <form name="verify_otp_form" method="POST" action="{{ url_for('verify_user') }}">
+    <form name="verify_otp_form" method="POST" action="{{ url_for('auth.verify_user') }}">
         <label for="otp">OTP</label>
         <input type="text" name="otp" class="field" required>
 

@@ -3,17 +3,17 @@
 {% block content %}
 
     <header>
-        <a href="{{ url_for('homepage') }}">
+        <a href="{{ url_for('main.homepage') }}">
             <h1>Carely AI</h1>
         </a>
     </header>
 
     <div id="left_column">
-        <a href="{{ url_for('profile') }}" id="profile_link">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
             <div id="profile">
                 <div id="profile_info">
                     <div id="profile_photo_container">
-                        <img src="{{ url_for('profile_image') }}"
+                        <img src="{{ url_for('main.profile_image') }}"
                              alt="Profile Photo"
                              id="profile_photo">
                     </div>
@@ -22,38 +22,36 @@
             </div>
         </a>
 
-        <a href="{{ url_for('customer_agent') }}" id="active_upload_link">Customer Support <br> Agent</a>
-        <a href="{{ url_for('chat_interface') }}" id="dashboard_link">Business Analytics <br> Agent</a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
         <div id="logout_image_container">
             <div id="logout_image_cont">
                 <img src="{{ url_for('static', filename='images/logout_img.png') }}"
                      alt="Logout Image"
                      id="logout_image">
             </div>
-            <a href="{{ url_for('logout') }}" id="logout_link">Logout</a>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
         </div>
     </div>
 
     <div id="content">
 
         <div id="inst_msg">
-            <h2>Carely AI Customer Support Agent</h2>
+            <h2>Carely AI Business Analytics Agent</h2>
         </div>
 
         <div id="instructions">
-        <h2>How to Set Up WhatsApp Customer Support Agent</h2>
+        <h2>How to Set Up Business Analytics Agent</h2>
         <div class="instruction_block">
             <p>
-                Please upload PDF documents that describe your business and how you serve customers. These may include company profiles, product or service descriptions, pricing lists, FAQs, customer support guidelines, operating hours, delivery or return policies, and any other information you would normally use to answer customer questions. The AI will use these documents to understand your business and respond accurately to customer inquiries on your behalf.
-            </p>
+                Define what matters to your business. Manually create tracking categories (e.g., "Complaints," "Pricing Inquiries") or let the Business Analytics Agent scan your uploaded documents to recommend the most relevant categories for your industry automatically.
             <div class="instruction_images">
                 <!-- Upload Business PDF Files -->
-                <a href="{{ url_for('upload_file') }}" class="agent-link">
+                <a href="{{ url_for('rag.upload_file') }}" class="agent-link">
                     <div class="upload_pdf_block">
-                        <h4>📚 Upload Business PDF Files</h4>
+                        <h4>🏷️ Define & Recommend Categories</h4>
                         <p>
-                            Upload your business rules, policies, product catalogs, and service offerings.
-                            These documents train your AI agent to provide accurate, personalized customer support.
+                            Select categories to track or let the Business Agent generate AI recommendations based on your uploaded policy documents.
                         </p>
                     </div>
                 </a>
@@ -61,16 +59,15 @@
         </div>
         <div class="instruction_block">
             <p>
-            Once your documents are uploaded, you can interact with the AI agent below to test how it responds to customer questions. Ask it anything your customers normally would—such as pricing, services, or operating hours—to ensure the responses are accurate before going live.
+                Visualize your customer interactions in real-time. This module categorizes every incoming message into your predefined categories, giving you a clear breakdown of conversation volume, trends, and customer intent on a unified dashboard.
             </p>
             <div class="instruction_images">
                 <!-- Carely Customer Support Agent -->
-                <a href="{{ url_for('chat_interface') }}" class="agent-link">
+                <a href="{{ url_for('rag.chat_interface') }}" class="agent-link">
                     <div class="customer_agent_block">
-                        <h4>🤖 Carely AI Customer Support Agent</h4>
+                        <h4>📊 Categorized Analytics Dashboard</h4>
                         <p>
-                            Launch your intelligent customer support agent that integrates with your WhatsApp
-                            to automate responses and handle customer inquiries based on your uploaded business knowledge.
+                            View customer interactions automatically sorted into your tracking categories for instant insights.
                         </p>
                     </div>
                 </a>
@@ -78,19 +75,14 @@
         </div>
         <div class="instruction_block">
             <p>
-                Connect your WhatsApp Business number to Carely AI so the agent can automatically respond to customer messages on your behalf. Once connected, incoming WhatsApp chats are handled instantly using your uploaded business documents, providing fast and consistent customer support.
+                Close the knowledge gap. The agent analyzes your category analytics to identify areas where the support agent is struggling. It then offers to generate a targeted new document covering these missing topics, which you can download and upload back to the system to instantly improve performance.
             </p>
             <div class="instruction_images">
-                <a href="{{ url_for('integration') }}" class="agent-link">
+                <a href="{{ url_for('rag.chat_interface') }}" class="agent-link">
                     <div class="customer_agent_block">
-
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 15px;">
-                            <img src="{{ url_for('static', filename='images/Whatsapp_logo.webp') }}"
-                                 alt="WhatsApp Business"
-                                 class="integration_logo"
-                                 style="margin-bottom: 0;"> <h4 style="margin: 0;">WhatsApp Integration</h4> </div>
+                        <h4>🚀 Generate Improvement Documents</h4>
                         <p>
-                            Integrate your WhatsApp Business number with Carely AI to enable AI-powered customer support directly on WhatsApp.
+                            Auto-generate new knowledge documents based on analytics gaps to train and upgrade your agent.
                         </p>
                     </div>
                 </a>

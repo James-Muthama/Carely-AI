@@ -3,29 +3,31 @@
 {% block content %}
 
     <header>
-        <a href="{{ url_for('home') }}"><h1>Carely AI</h1></a>
+        <a href="{{ url_for('main.home') }}"><h1>Carely AI</h1></a>
     </header>
 
     <div id="left_column">
-        <a href="{{ url_for('profile') }}" id="profile_link">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
             <div id="profile">
                 <div id="profile_info">
                     <div id="profile_photo_container">
-                        <img src="{{ url_for('profile_image') }}" alt="Profile Photo" id="profile_photo">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
                     </div>
                     <div id="company_name">{{ session['user'] }}</div>
                 </div>
             </div>
         </a>
-        <a href="{{ url_for('customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
-        <a href="{{ url_for('business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
+
         <div id="logout_image_container">
-            <a href="{{ url_for('logout') }}" >
+            <a href="{{ url_for('main.logout') }}" >
                 <div id="logout_image_cont">
                     <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
                 </div>
             </a>
-            <a href="{{ url_for('logout') }}" id="logout_link">Logout</a>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
         </div>
     </div>
 

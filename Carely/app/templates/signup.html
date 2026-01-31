@@ -3,9 +3,9 @@
 {% block content %}
 
 <header>
-        <a href="{{ url_for('home') }}"><h1>Carely AI</h1></a>
+        <a href="{{ url_for('main.home') }}"><h1>Carely AI</h1></a>
         <nav>
-            <a href=" {{ url_for('login')}}">Login</a>
+            <a href=" {{ url_for('auth.login')}}">Login</a>
         </nav>
     </header>
 
@@ -20,7 +20,7 @@
         {% endif %}
     {% endwith %}
 
-    <form name="signup_form" method="POST" action="{{ url_for('user_signup') }}">
+    <form name="signup_form" method="POST" action="{{ url_for('auth.user_signup') }}">
         <label for="name">Company Name</label>
         <input type="text" name="name" class="field" required>
 

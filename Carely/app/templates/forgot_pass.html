@@ -3,14 +3,11 @@
 {% block content %}
 
 <header>
-    <a href="{{ url_for('home') }}"><h1>Carely</h1></a>
-    <nav>
-        <a href="{{ url_for('sign_out') }}">About</a>
-    </nav>
+    <a href="{{ url_for('main.home') }}"><h1>Carely AI</h1></a>
 </header>
 
 <div class="card">
-    <h1>Verification Code</h1>
+    <h1>Forgot Password</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -20,12 +17,16 @@
         {% endif %}
     {% endwith %}
 
-    <form name="verify_otp_form" method="POST" action="{{ url_for('two_factor_authentication_login') }}">
-        <label for="otp">OTP</label>
-        <input type="text" name="otp" class="field" required>
+    <form name="forgot_password_form" method="POST" action="{{ url_for('auth.forgot_password') }}">
+        <label for="email">Email</label>
+        <input type="email" name="email" class="field" required>
 
-        <input type="submit" value="Verify" class="btn">
+        <input type="submit" value="Submit" class="btn">
     </form>
+
+    <div class="links">
+        <a href="{{ url_for('auth.login') }}">Back to Login</a>
+    </div>
 </div>
 
 <footer>

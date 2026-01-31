@@ -3,12 +3,12 @@
 {% block content %}
 
 <header>
-    <a href="{{ url_for('home') }}"><h1>Carely</h1></a>
-    <nav>
-        <a href="{{ url_for('sign_out') }}">About</a> |
-        <a href="{{ url_for('sign_out') }}">Logout</a>
-    </nav>
-</header>
+        <a href="{{ url_for('main.home') }}"><h1>Carely AI</h1></a>
+        <nav>
+            <a href="#about">About</a> |
+            <a href=" {{ url_for('auth.login')}}">Login</a>
+        </nav>
+    </header>
 
 <div class="card">
     <h1>Verification Code</h1>
@@ -21,7 +21,7 @@
         {% endif %}
     {% endwith %}
 
-    <form name="verify_otp_form" method="POST" action="{{ url_for('verify_admin') }}">
+    <form name="verify_otp_form" method="POST" action="{{ url_for('auth.verify_otp') }}">
         <label for="otp">OTP</label>
         <input type="text" name="otp" class="field" required>
 
@@ -30,7 +30,7 @@
 </div>
 
 <footer>
-    <p>Copyright &copy; 2024 All Rights Reserved. By Customer Insight AI</p>
+    <p>Copyright &copy; 2024 All Rights Reserved. By Carely AI</p>
 </footer>
 
 <!-- Custom CSS -->

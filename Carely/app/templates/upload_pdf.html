@@ -3,27 +3,27 @@
 {% block content %}
 
     <header>
-        <a href="{{ url_for('homepage') }}"><h1>Carely AI</h1></a>
+        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
     </header>
 
     <div id="left_column">
-        <a href="{{ url_for('profile') }}" id="profile_link">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
             <div id="profile">
                 <div id="profile_info">
                     <div id="profile_photo_container">
-                        <img src="{{ url_for('profile_image') }}" alt="Profile Photo" id="profile_photo">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
                     </div>
                     <div id="company_name">{{ session['user'] }}</div>
                 </div>
             </div>
         </a>
-        <a href="{{ url_for('customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
-        <a href="{{ url_for('chat_interface') }}" id="dashboard_link">Business Analytics <br> Agent</a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
         <div id="logout_image_container">
             <div id="logout_image_cont">
                 <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
             </div>
-            <a href="{{ url_for('logout') }}" id="logout_link">Logout</a>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
         </div>
     </div>
 
@@ -58,7 +58,7 @@
                 <h2 style="color: white; margin-top: 0;">✅ System Ready!</h2>
                 <p style="margin: 10px 0;">Your Carely AI WhatsApp Customer Support Agent is active and ready to answer questions.</p>
                 <div style="margin-top: 15px;">
-                    <a href="{{ url_for('chat_interface') }}" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; text-decoration: none; border-radius: 8px; margin-right: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <a href="{{ url_for('rag.chat_interface') }}" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; text-decoration: none; border-radius: 8px; margin-right: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         💬 Go to Chat Interface
                     </a>
                     <button onclick="checkSystemHealth()" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -203,7 +203,7 @@
                         <div style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; padding: 20px; border-radius: 10px; box-shadow: 0 6px 20px rgba(70, 130, 180, 0.3);">
                             <h3 style="margin-top: 0; color: white;">💬 Start Chatting</h3>
                             <p style="margin-bottom: 15px;">Carely AI Agent is ready! Go to the chat interface and start asking questions about your business.</p>
-                            <a href="{{ url_for('chat_interface') }}" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; text-decoration: none; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <a href="{{ url_for('rag.chat_interface') }}" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; text-decoration: none; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                 Go to Chat →
                             </a>
                         </div>
@@ -452,7 +452,7 @@
         function showSystemHealth() {
             document.getElementById('health-modal').style.display = 'block';
 
-            fetch('{{ url_for("rag_status") }}')
+            fetch('{{ url_for("rag.rag_status") }}')
             .then(response => response.json())
             .then(data => {
                 const healthContent = document.getElementById('health-content');
@@ -580,7 +580,7 @@
             });
 
             // Make delete request
-            fetch('{{ url_for("delete_document") }}', {
+            fetch('{{ url_for("rag.delete_document") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
