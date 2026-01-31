@@ -18,7 +18,7 @@
             </div>
         </a>
         <a href="{{ url_for('customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
-        <a href="{{ url_for('chat_interface') }}" id="dashboard_link">Business Analytics</a>
+        <a href="{{ url_for('chat_interface') }}" id="dashboard_link">Business Analytics <br> Agent</a>
         <div id="logout_image_container">
             <a href="{{ url_for('logout') }}" >
                 <div id="logout_image_cont">
@@ -34,7 +34,7 @@
             <p id="welcome">Welcome {{ session['user'] }}</p>
         </div>
         <div id="instructions">
-            <h2>How to use Carely</h2>
+            <h2>How to use Carely AI</h2>
             <div class="instruction_block">
                 <p>Please select a PDF file containing your business information, customer support guidelines, FAQs, policies, or any other relevant business documents.</p>
                 <div class="instruction_images">

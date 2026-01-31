@@ -15,7 +15,6 @@ ENV/
 # Databases & Local Storage
 chroma_db_*/
 *.sqlite3
-mongodb_database/
 
 # Application uploads and temporary files
 uploads/

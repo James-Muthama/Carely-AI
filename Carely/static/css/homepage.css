@@ -109,12 +109,28 @@ nav a:hover {
     height: auto;
 }
 
-#mcp_link, #dashboard_link, #upload_link, #emotion_dashboard_link {
+#upload_link{
+    margin-bottom: 40px;
+}
+
+#upload_link,#active_upload_link {
+    margin-bottom: 40px;
+}
+
+#upload_link,
+#dashboard_link,
+#active_upload_link {
     color: white;
     text-decoration: none;
-    margin-bottom: 40px;
     font-size: 18px;
     font-weight: bold;
+    display: block;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 80%;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 #logout_link {
@@ -122,7 +138,7 @@ nav a:hover {
     text-decoration: none;
     margin-bottom: 40px;
     font-size: 18px;
-    margin-top: 220px;
+    margin-top: 130px;
     margin-left: 5px;
 }
 
@@ -142,8 +158,8 @@ nav a:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 180px;
     margin-right: 5px;
+    margin-top: 90px;
 }
 
 #logout_image {
@@ -151,8 +167,26 @@ nav a:hover {
     height: auto;
 }
 
-#mcp_link:hover, #dashboard_link:hover, #upload_link:hover, #logout_link:hover, #emotion_dashboard_link:hover {
-    text-decoration: none;
+#upload_link:hover,
+#dashboard_link:hover {
+    background-color: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(5px);
+}
+
+#active_upload_link {
+    background-color: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(5px);
+}
+
+#left_column:has(#dashboard_link:hover) #active_upload_link {
+    background-color: transparent; /* Goes back to dark blue/transparent */
+    color: white;                  /* Text goes back to white */
+    box-shadow: none;              /* Remove the pop-out shadow */
+    transform: translateX(0);      /* Move back to original position */
 }
 
 #content {
