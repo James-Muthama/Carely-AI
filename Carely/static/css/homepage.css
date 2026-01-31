@@ -119,7 +119,8 @@ nav a:hover {
 
 #upload_link,
 #dashboard_link,
-#active_upload_link {
+#active_upload_link,
+#active_dashboard_link{
     color: white;
     text-decoration: none;
     font-size: 18px;
@@ -175,7 +176,7 @@ nav a:hover {
     transform: translateX(5px);
 }
 
-#active_upload_link {
+#active_upload_link, #active_dashboard_link {
     background-color: #ffffff;
     color: #1e293b;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -183,6 +184,13 @@ nav a:hover {
 }
 
 #left_column:has(#dashboard_link:hover) #active_upload_link {
+    background-color: transparent; /* Goes back to dark blue/transparent */
+    color: white;                  /* Text goes back to white */
+    box-shadow: none;              /* Remove the pop-out shadow */
+    transform: translateX(0);      /* Move back to original position */
+}
+
+#left_column:has(#upload_link:hover) #active_dashboard_link {
     background-color: transparent; /* Goes back to dark blue/transparent */
     color: white;                  /* Text goes back to white */
     box-shadow: none;              /* Remove the pop-out shadow */

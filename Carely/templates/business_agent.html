@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <header>
+        <a href="{{ url_for('homepage') }}">
+            <h1>Carely AI</h1>
+        </a>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('profile_image') }}"
+                             alt="Profile Photo"
+                             id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('chat_interface') }}" id="active_dashboard_link">Business Analytics <br> Agent</a>
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}"
+                     alt="Logout Image"
+                     id="logout_image">
+            </div>
+            <a href="{{ url_for('logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+
+        <div id="inst_msg">
+            <h2>Carely AI Business Analytics Agent</h2>
+        </div>
+
+        <div id="instructions">
+        <h2>How to Set Up Business Analytics Agent</h2>
+        <div class="instruction_block">
+            <p>
+                Define what matters to your business. Manually create tracking categories (e.g., "Complaints," "Pricing Inquiries") or let the Business Analytics Agent scan your uploaded documents to recommend the most relevant categories for your industry automatically.
+            <div class="instruction_images">
+                <!-- Upload Business PDF Files -->
+                <a href="{{ url_for('upload_file') }}" class="agent-link">
+                    <div class="upload_pdf_block">
+                        <h4>🏷️ Define & Recommend Categories</h4>
+                        <p>
+                            Select categories to track or let the Business Agent generate AI recommendations based on your uploaded policy documents.
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="instruction_block">
+            <p>
+                Visualize your customer interactions in real-time. This module categorizes every incoming message into your predefined categories, giving you a clear breakdown of conversation volume, trends, and customer intent on a unified dashboard.
+            </p>
+            <div class="instruction_images">
+                <!-- Carely Customer Support Agent -->
+                <a href="{{ url_for('chat_interface') }}" class="agent-link">
+                    <div class="customer_agent_block">
+                        <h4>📊 Categorized Analytics Dashboard</h4>
+                        <p>
+                            View customer interactions automatically sorted into your tracking categories for instant insights.
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="instruction_block">
+            <p>
+                Close the knowledge gap. The agent analyzes your category analytics to identify areas where the support agent is struggling. It then offers to generate a targeted new document covering these missing topics, which you can download and upload back to the system to instantly improve performance.
+            </p>
+            <div class="instruction_images">
+                <a href="{{ url_for('chat_interface') }}" class="agent-link">
+                    <div class="customer_agent_block">
+                        <h4>🚀 Generate Improvement Documents</h4>
+                        <p>
+                            Auto-generate new knowledge documents based on analytics gaps to train and upgrade your agent.
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        #agent_setup_options {
+            margin-top: 20px;
+        }
+
+        #agent_setup_options h3 {
+            margin-bottom: 20px;
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        .agent-setup-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .agent-setup-row-single {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .agent-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .upload_pdf_block,
+        .customer_agent_block,
+        .integration_tools_block {
+            flex: 1;
+            min-width: 280px;
+            max-width: 400px;
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .upload_pdf_block:hover,
+        .customer_agent_block:hover,
+        .integration_tools_block:hover {
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            border-color: #3b82f6;
+        }
+
+        .setup_logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .upload_pdf_block:hover .setup_logo,
+        .customer_agent_block:hover .setup_logo,
+        .integration_tools_block:hover .setup_logo {
+            transform: scale(1.1);
+        }
+
+        .upload_pdf_block h4,
+        .customer_agent_block h4,
+        .integration_tools_block h4 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .upload_pdf_block p,
+        .customer_agent_block p,
+        .integration_tools_block p {
+            margin: 0;
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        #customer_agent_header h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #1e293b;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        #customer_agent_header p {
+            margin: 0;
+            font-size: 16px;
+            color: #64748b;
+            line-height: 1.6;
+            max-width: 800px;
+        }
+
+        @media (max-width: 768px) {
+            .agent-setup-row {
+                flex-direction: column;
+                align-items: center;
+                gap: 25px;
+            }
+
+            .upload_pdf_block,
+            .customer_agent_block,
+            .integration_tools_block {
+                max-width: 100%;
+                width: 300px;
+                padding: 25px;
+            }
+
+            .setup_logo {
+                width: 80px;
+                height: 80px;
+            }
+
+            #customer_agent_header h2 {
+                font-size: 24px;
+            }
+        }
+
+        /* Additional styling for better visual hierarchy */
+        .upload_pdf_block {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .customer_agent_block {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+
+        .integration_tools_block {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .upload_pdf_block:hover {
+            background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+        }
+
+        .customer_agent_block:hover {
+            background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+        }
+
+        .integration_tools_block:hover {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        }
+
+        .integration_logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            transition: transform 0.2s ease;
+        }
+
+    </style>
+
+{% endblock %}
