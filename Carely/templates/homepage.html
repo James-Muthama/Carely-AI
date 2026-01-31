@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <header>
+        <a href="{{ url_for('home') }}"><h1>Carely AI</h1></a>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+        <a href="{{ url_for('customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('chat_interface') }}" id="dashboard_link">Business Analytics</a>
+        <div id="logout_image_container">
+            <a href="{{ url_for('logout') }}" >
+                <div id="logout_image_cont">
+                    <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+                </div>
+            </a>
+            <a href="{{ url_for('logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">Welcome {{ session['user'] }}</p>
+        </div>
+        <div id="instructions">
+            <h2>How to use Carely</h2>
+            <div class="instruction_block">
+                <p>Please select a PDF file containing your business information, customer support guidelines, FAQs, policies, or any other relevant business documents.</p>
+                <div class="instruction_images">
+                    <img src="{{ url_for('static', filename='images/upload.png') }}" alt="Upload Image">
+                </div>
+            </div>
+            <div class="instruction_block">
+                <p>The AI system will process your document and create a knowledge base that can answer customer questions based on your business information.</p>
+                <div class="instruction_images">
+                    <img src="{{ url_for('static', filename='images/visualisation.png') }}" alt="Processing Image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

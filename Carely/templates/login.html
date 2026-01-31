@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header>
+        <a href="{{ url_for('home') }}"><h1>Carely AI</h1></a>
+        <nav>
+            <a href="{{ url_for('user_signup') }}">Sign Up</a>
+        </nav>
+</header>
+
+<div class="card">
+    <h1>Login</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-message {{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form name="login_form" method="POST" action="{{ url_for('user_login') }}">
+        <label for="email">Company Email</label>
+        <input type="email" name="email" class="field" required>
+
+        <label for="password">Company Password</label>
+        <input type="password" name="password" class="field" required>
+
+        <!-- reCAPTCHA v2 Checkbox -->
+        <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
+
+        <input type="submit" value="Login" class="btn">
+    </form>
+
+    <div class="links">
+        <a href="{{ url_for('forgot_password') }}">Forgot Password?</a> |
+        <a href="{{ url_for('user_signup') }}">Sign Up</a>
+    </div>
+</div>
+
+<footer>
+    <p>Copyright &copy; 2024 All Rights Reserved.</p>
+    <a href="{{ url_for('admin') }}" style="color: #475569; text-decoration: none; font-size: 0.9rem; font-weight: 400;">By Carely AI</a>
+</footer>
+
+<!-- Include reCAPTCHA v2 Checkbox script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<!-- Custom CSS -->
+<style>
+    footer{
+        position: relative;
+        top: 50px;
+    }
+
+    footer a {
+        color: white;
+        text-decoration: none;
+    }
+</style>
+
+{% endblock %}

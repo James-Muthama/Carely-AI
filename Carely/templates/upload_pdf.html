@@ -1,0 +1,770 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <header>
+        <a href="{{ url_for('homepage') }}"><h1>Carely AI</h1></a>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+        <a href="{{ url_for('customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('chat_interface') }}" id="dashboard_link">Business Analytics</a>
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+            </div>
+            <a href="{{ url_for('logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">Upload Business Document</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {% if category == 'error' %}
+                                <i>⚠️</i>
+                            {% elif category == 'success' %}
+                                <i>✅</i>
+                            {% elif category == 'warning' %}
+                                <i>⚠️</i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- System Status Overview -->
+        {% if rag_ready %}
+            <div class="content-box" style="background: linear-gradient(135deg, #32CD32 0%, #228B22 100%); color: white; margin-bottom: 20px;">
+                <h2 style="color: white; margin-top: 0;">✅ System Ready!</h2>
+                <p style="margin: 10px 0;">Your Carely AI WhatsApp Customer Support Agent is active and ready to answer questions.</p>
+                <div style="margin-top: 15px;">
+                    <a href="{{ url_for('chat_interface') }}" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; text-decoration: none; border-radius: 8px; margin-right: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        💬 Go to Chat Interface
+                    </a>
+                    <button onclick="checkSystemHealth()" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        🔍 Check System Health
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            <div class="content-box" style="background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%); color: white; margin-bottom: 20px;">
+                <h2 style="color: white; margin-top: 0;">📄 Upload Required</h2>
+                <p style="margin: 10px 0;">Upload your business document to activate the AI customer support system.</p>
+            </div>
+        {% endif %}
+
+        <!-- Container for side-by-side boxes -->
+        <div style="margin-bottom: 20px; display: flex; align-items: stretch; gap: 20px;">
+            <!-- Upload Form -->
+            <div class="content-box" style="margin-right: 0; width: calc(50% - 10px);">
+                <h2 style="color: #1e293b;">📤 Select PDF File</h2>
+                <form method="POST" enctype="multipart/form-data" class="upload-form" id="upload-form">
+                    <div class="upload-input" style="margin-bottom: 20px;">
+                        <label for="file" style="color: #1e293b;"><strong>Choose PDF File:</strong></label><br><br>
+                        <div style="position: relative; display: inline-block; width: 100%;">
+                            <input type="file" name="file" id="file" accept=".pdf" required
+                                   style="width: 100%; padding: 10px; border: 2px dashed #4682B4; border-radius: 8px; cursor: pointer; background-color: #f8fafc;"
+                                   onchange="handleFileSelect(this)">
+                        </div>
+                        <div id="file-info" style="margin-top: 10px; font-size: 14px; color: #64748b;"></div>
+                    </div>
+
+                    <div class="upload-input">
+                        <button type="submit" class="upload-submit" id="upload-btn"
+                                style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; transition: all 0.3s; box-shadow: 0 4px 12px rgba(70, 130, 180, 0.3);">
+                            📤 Upload and Process PDF
+                        </button>
+                    </div>
+                </form>
+
+                <div>
+                    <p><strong style="color: #DC143C;">File Size Limits:</strong></p>
+                    <div style="background: #fff5f5; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px; font-size: 14px; color: #1e293b;">
+                        📏 Recommended: Under 10MB<br>
+                        📑 Maximum: 50 pages for optimal performance
+                    </div>
+                </div>
+
+                <!-- Upload Progress (Hidden by default) -->
+                <div id="upload-progress" style="display: none; margin-top: 20px;">
+                    <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #cbd5e1;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">⚙️</div>
+                        <div style="font-size: 18px; color: #1e293b; margin-bottom: 10px;" id="progress-text">Processing PDF...</div>
+                        <div style="width: 100%; background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div id="progress-bar" style="width: 0%; background: linear-gradient(90deg, #4682B4, #1e293b); height: 100%; transition: width 0.3s;"></div>
+                        </div>
+                        <div style="font-size: 14px; color: #64748b; margin-top: 10px;">This may take 1-3 minutes depending on document size</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Requirements -->
+            <div class="content-box" style="width: calc(50% - 10px);">
+                <h2 style="color: #1e293b;">📋 File Requirements & Tips</h2>
+
+                <div style="margin-bottom: 20px;">
+                    <p><strong style="color: #4682B4;">Supported Format:</strong></p>
+                    <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #4682B4; border-radius: 6px; padding: 10px; font-size: 14px; color: #1e293b;">
+                        📄 PDF files only (.pdf)
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p><strong style="color: #32CD32;">Recommended Content:</strong></p>
+                    <ul style="text-align: left; margin-left: 20px; font-size: 14px; line-height: 1.6; color: #1e293b;">
+                        <li>Business information and services</li>
+                        <li>Frequently Asked Questions (FAQs)</li>
+                        <li>Customer support policies</li>
+                        <li>Product/service documentation</li>
+                        <li>Contact information</li>
+                        <li>Terms and conditions</li>
+                        <li>Pricing information</li>
+                        <li>Company procedures</li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p><strong style="color: #FFD700;">Processing Info:</strong></p>
+                    <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #FFD700; border-radius: 6px; padding: 10px; font-size: 14px; color: #1e293b;">
+                        ⏱️ Usually takes 1-3 minutes<br>
+                        🧠 Uses AI to understand and index content<br>
+                        💾 Stores data persistently in MongoDB and ChromaDB
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container for side-by-side boxes -->
+        <div style="margin-bottom: 20px; display: flex; align-items: stretch; gap: 20px;">
+            <!-- Existing Documents Section -->
+            {% if existing_documents %}
+                <div class="content-box">
+                    <h2 style="color: #1e293b;">📚 Your Processed Documents</h2>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        {% for doc in existing_documents %}
+                            <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: {% if doc.status == 'completed' %}linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%){% else %}linear-gradient(135deg, #fef3c7 0%, #fde68a 100%){% endif %};">
+                                <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <h4 style="margin: 0 0 8px 0; color: #1e293b;">{{ doc.file_name }}</h4>
+                                        <div style="font-size: 14px; color: #64748b;">
+                                            <div style="margin-bottom: 4px;">
+                                                <strong>Status:</strong>
+                                                <span style="color: {% if doc.status == 'completed' %}#32CD32{% elif doc.status == 'processing' %}#FFD700{% else %}#DC143C{% endif %}; font-weight: 500;">
+                                                    {% if doc.status == 'completed' %}✅ Processed {% elif doc.status == 'processing' %}⚙️ Processing{% else %}❌ Failed{% endif %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #64748b; font-size: 14px; margin-bottom: 15px;">
+                            <strong>Note:</strong> Uploading a new document will add to your existing knowledge base.
+                            Carely AI will have access to information from all processed documents.
+                        </p>
+                        <button onclick="refreshDocumentsList()" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-right: 10px; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);">
+                            🔄 Refresh List
+                        </button>
+                        <button onclick="showUploadedDocuments()" style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 6px rgba(70, 130, 180, 0.3);">
+                            📄 Uploaded Documents
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Current Status -->
+            {% if rag_ready %}
+                <div class="content-box">
+                    <h2 style="color: #1e293b;">🎯 Next Steps</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <div style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; padding: 20px; border-radius: 10px; box-shadow: 0 6px 20px rgba(70, 130, 180, 0.3);">
+                            <h3 style="margin-top: 0; color: white;">💬 Start Chatting</h3>
+                            <p style="margin-bottom: 15px;">Carely AI Agent is ready! Go to the chat interface and start asking questions about your business.</p>
+                            <a href="{{ url_for('chat_interface') }}" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; text-decoration: none; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                Go to Chat →
+                            </a>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #32CD32 0%, #228B22 100%); color: white; padding: 20px; border-radius: 10px; box-shadow: 0 6px 20px rgba(50, 205, 50, 0.3);">
+                            <h3 style="margin-top: 0; color: white;">📈 Add More Content</h3>
+                            <p style="margin-bottom: 15px;">Upload additional documents to expand Carely AI's knowledge and improve responses.</p>
+                            <button onclick="document.getElementById('file').click()" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                Add Document →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="content-box">
+                    <h2 style="color: #1e293b;">🚀 Get Started</h2>
+                    <div style="background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📄</div>
+                        <h3 style="margin: 0 0 10px 0; color: white;">Upload Your First Document</h3>
+                        <p style="margin-bottom: 20px;">Upload a business PDF to activate your AI customer support assistant. The system will process and understand your content to provide accurate responses.</p>
+                        <button onclick="document.getElementById('file').click()" style="background: rgba(255,255,255,0.25); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            Choose PDF File
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- System Health Modal (Hidden by default) -->
+        <div id="health-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 700px; width: 90%; max-height: 80%; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+                <h3 style="margin-top: 0; color: #1e293b;">🩺 System Health Check</h3>
+                <div id="health-content">Loading system health...</div>
+                <button onclick="closeHealthModal()" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);">Close</button>
+            </div>
+        </div>
+
+        <!-- Uploaded Documents Modal (Hidden by default) -->
+        <div id="documents-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 800px; width: 90%; max-height: 80%; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+                <h3 style="margin-top: 0; color: #1e293b;">📄 All Uploaded Documents</h3>
+                <div id="documents-content">
+                    {% if existing_documents %}
+                        <div style="max-height: 500px; overflow-y: auto;">
+                            {% for doc in existing_documents %}
+                                <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; margin-bottom: 15px; background: {% if doc.status == 'completed' %}linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%){% else %}linear-gradient(135deg, #fef3c7 0%, #fde68a 100%){% endif %};">
+                                    <div style="display: flex; justify-content: between; align-items: start; gap: 15px;">
+                                        <div style="flex: 1;">
+                                            <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 18px;">📄 {{ doc.file_name }}</h4>
+                                            <div style="font-size: 14px; color: #64748b; line-height: 1.6;">
+                                                <div style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                                                    <strong>Status:</strong>
+                                                    <span style="color: {% if doc.status == 'completed' %}#32CD32{% elif doc.status == 'processing' %}#FFD700{% else %}#DC143C{% endif %}; font-weight: 500; padding: 2px 8px; border-radius: 12px; background: {% if doc.status == 'completed' %}#ecfdf5{% elif doc.status == 'processing' %}#fffbeb{% else %}#fef2f2{% endif %}; font-size: 12px;">
+                                                        {% if doc.status == 'completed' %}✅ Processed{% elif doc.status == 'processing' %}⚙️ Processing{% else %}❌ Failed{% endif %}
+                                                    </span>
+                                                </div>
+                                                {% if doc.uploaded_at %}
+                                                    <div style="margin-bottom: 8px;">
+                                                        <strong>📅 Uploaded:</strong> {{ doc.uploaded_at.strftime('%B %d, %Y at %I:%M %p') if doc.uploaded_at else 'Unknown' }}
+                                                    </div>
+                                                {% endif %}
+                                                {% if doc.total_pages %}
+                                                    <div style="margin-bottom: 8px;">
+                                                        <strong>📋 Pages:</strong> {{ doc.total_pages }} pages
+                                                    </div>
+                                                {% endif %}
+                                                {% if doc.file_size %}
+                                                    <div style="margin-bottom: 8px;">
+                                                        <strong>📏 Size:</strong> {{ "%.2f"|format(doc.file_size / 1024 / 1024) }} MB
+                                                    </div>
+                                                {% endif %}
+                                                {% if doc.processing_time %}
+                                                    <div style="margin-bottom: 8px;">
+                                                        <strong>⏱️ Processing Time:</strong> {{ doc.processing_time }} seconds
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            {% if doc.status == 'completed' %}
+                                                <div style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #32CD32; border-radius: 6px; font-size: 13px; color: #1e293b;">
+                                                    ✅ This document has been successfully processed and is available for AI queries.
+                                                </div>
+                                            {% elif doc.status == 'processing' %}
+                                                <div style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #FFD700; border-radius: 6px; font-size: 13px; color: #1e293b;">
+                                                    ⚙️ This document is currently being processed. Please wait...
+                                                </div>
+                                            {% else %}
+                                                <div style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #DC143C; border-radius: 6px; font-size: 13px; color: #1e293b;">
+                                                    ❌ Processing failed. You may need to re-upload this document.
+                                                </div>
+                                            {% endif %}
+
+                                            <!-- Delete Button -->
+                                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: right;">
+                                                <button onclick="confirmDeleteDocument('{{ doc.file_name }}')"
+                                                        style="background: linear-gradient(135deg, #DC143C 0%, #B91C1C 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; margin-left: auto; box-shadow: 0 2px 6px rgba(220, 20, 60, 0.3);"
+                                                        onmouseover="this.style.background='linear-gradient(135deg, #B91C1C 0%, #991B1B 100%)'"
+                                                        onmouseout="this.style.background='linear-gradient(135deg, #DC143C 0%, #B91C1C 100%)'">
+                                                    <span>🗑️</span> Delete Document
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                            <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px;">
+                                <h4 style="margin-top: 0; color: #1e293b;">📊 Summary</h4>
+                                <div style="font-size: 14px; color: #64748b; line-height: 1.6;">
+                                    <strong>Total Documents:</strong> {{ existing_documents|length }}<br>
+                                    <strong>Successfully Processed:</strong> {{ existing_documents|selectattr('status', 'equalto', 'completed')|list|length }}<br>
+                                    <strong>Currently Processing:</strong> {{ existing_documents|selectattr('status', 'equalto', 'processing')|list|length }}<br>
+                                    <strong>Failed:</strong> {{ existing_documents|rejectattr('status', 'in', ['completed', 'processing'])|list|length }}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 40px; color: #64748b;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">📄</div>
+                            <h4 style="color: #1e293b;">No Documents Found</h4>
+                            <p>You haven't uploaded any documents yet. Upload your first PDF to get started!</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <button onclick="closeDocumentsModal()" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);">Close</button>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="delete-confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1001;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; color: #DC143C; margin-bottom: 15px;">🗑️</div>
+                    <h3 style="margin-top: 0; color: #1e293b;">Delete Document</h3>
+                    <p style="color: #64748b; margin-bottom: 20px;">Are you sure you want to delete "<strong id="delete-file-name"></strong>"?</p>
+
+                    <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #DC143C; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: left;">
+                        <h4 style="color: #DC143C; margin-top: 0; font-size: 16px;">⚠️ This action cannot be undone and will remove:</h4>
+                        <ul style="color: #64748b; font-size: 14px; margin: 10px 0; padding-left: 20px;">
+                            <li>The document from your knowledge base</li>
+                            <li>All processed text chunks and embeddings</li>
+                            <li>Vector store data for this document</li>
+                            <li>Associated conversation history</li>
+                        </ul>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="closeDeleteConfirmModal()"
+                                style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);">
+                            Cancel
+                        </button>
+                        <button id="confirm-delete-btn" onclick="proceedWithDelete()"
+                                style="background: linear-gradient(135deg, #DC143C 0%, #B91C1C 100%); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 6px rgba(220, 20, 60, 0.3);">
+                            Delete Document
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let uploadInProgress = false;
+
+        // Handle file selection
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            const fileInfo = document.getElementById('file-info');
+
+            if (file) {
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                const fileName = file.name;
+
+                fileInfo.innerHTML = `
+                    <div style="color: #32CD32;">
+                        ✅ Selected: <strong>${fileName}</strong><br>
+                        📏 Size: ${fileSize} MB<br>
+                        📄 Type: ${file.type || 'PDF Document'}
+                    </div>
+                `;
+
+                // Validate file size
+                if (file.size > 50 * 1024 * 1024) { // 50MB limit
+                    fileInfo.innerHTML += `
+                        <div style="color: #DC143C; margin-top: 8px;">
+                            ⚠️ Warning: File is quite large. Processing may take longer.
+                        </div>
+                    `;
+                }
+
+                // Auto-submit option could be added here if desired
+                // setTimeout(() => document.getElementById('upload-form').submit(), 1000);
+            }
+        }
+
+        // Handle form submission with progress indication
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            if (uploadInProgress) {
+                e.preventDefault();
+                return;
+            }
+
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Please select a PDF file first.');
+                return;
+            }
+
+            // Start upload process
+            uploadInProgress = true;
+            const uploadBtn = document.getElementById('upload-btn');
+            const progressDiv = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            // Disable upload button
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '⏳ Uploading...';
+            uploadBtn.style.opacity = '0.6';
+
+            // Show progress
+            progressDiv.style.display = 'block';
+
+            // Simulate progress (since we can't track real progress easily with form submission)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) {
+                    progress = 90;
+                    clearInterval(progressInterval);
+                    progressText.textContent = 'Processing document with AI...';
+                }
+                progressBar.style.width = progress + '%';
+            }, 200);
+
+            // The form will submit naturally and redirect
+        });
+
+        // System health functions
+        function checkSystemHealth() {
+            showSystemHealth();
+        }
+
+        function showSystemHealth() {
+            document.getElementById('health-modal').style.display = 'block';
+
+            fetch('{{ url_for("rag_status") }}')
+            .then(response => response.json())
+            .then(data => {
+                const healthContent = document.getElementById('health-content');
+
+                let html = '<div style="max-height: 400px; overflow-y: auto;">';
+
+                // System Overview
+                html += `
+                    <div style="background: ${data.system_available ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'}; border: 1px solid ${data.system_available ? '#32CD32' : '#DC143C'}; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                        <h4 style="margin-top: 0; color: ${data.system_available ? '#1e293b' : '#1e293b'};">
+                            ${data.system_available ? '✅ System Online' : '❌ System Offline'}
+                        </h4>
+                        <div style="font-size: 14px; color: #64748b;">
+                            <strong>Documents:</strong> ${data.health?.processed_documents_count || 0} processed<br>
+                            <strong>Carely AI Status:</strong> ${data.ready ? 'Ready' : 'Not Ready'}
+                        </div>
+                    </div>
+                `;
+
+                // Component Status
+                html += '<h4 style="color: #1e293b;">🔧 Component Status</h4>';
+                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px;">';
+
+                const components = [
+                    { name: 'Embedding Model', status: data.health?.embedding_model, icon: '🧠' },
+                    { name: 'Vector Store', status: data.health?.vector_store, icon: '🗂️' },
+                    { name: 'RAG Chain', status: data.health?.rag_chain, icon: '🔗' },
+                    { name: 'MongoDB', status: data.health?.mongodb_collections?.documents_connected, icon: '📊' }
+                ];
+
+                components.forEach(comp => {
+                    html += `
+                        <div style="background: ${comp.status ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)'}; border: 1px solid ${comp.status ? '#32CD32' : '#DC143C'}; padding: 10px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 20px; margin-bottom: 5px;">${comp.icon}</div>
+                            <div style="font-size: 12px; font-weight: 500; color: #1e293b;">${comp.name}</div>
+                            <div style="font-size: 11px; color: ${comp.status ? '#32CD32' : '#DC143C'};">
+                                ${comp.status ? 'Active' : 'Inactive'}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+
+                // Storage Info
+                if (data.health?.embeddings_stats) {
+                    html += `
+                        <h4 style="color: #1e293b;">💾 Storage Information</h4>
+                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                            <div style="font-size: 14px; color: #64748b;">
+                                <strong>Total Embeddings:</strong> ${data.health.embeddings_stats.total_embeddings || 0}<br>
+                                <strong>Unique Documents:</strong> ${data.health.embeddings_stats.unique_documents || 0}<br>
+                                <strong>Conversation History:</strong> ${data.health?.conversation_history_count || 0} exchanges / conversations<br>
+                                <strong>Persistent Storage:</strong> ${data.health?.persistent_storage ? '✅ Active' : '❌ Inactive'}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+                healthContent.innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('health-content').innerHTML = `
+                    <div style="color: #1e293b; text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 15px; color: #DC143C;">❌</div>
+                        <h4>Health Check Failed</h4>
+                        <p>Unable to retrieve system health information.</p>
+                        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #DC143C; border-radius: 6px; padding: 10px; margin-top: 15px; font-size: 14px;">
+                            Error: ${error.message}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function closeHealthModal() {
+            document.getElementById('health-modal').style.display = 'none';
+        }
+
+        // Uploaded documents functions
+        function showUploadedDocuments() {
+            document.getElementById('documents-modal').style.display = 'block';
+        }
+
+        function closeDocumentsModal() {
+            document.getElementById('documents-modal').style.display = 'none';
+        }
+
+        // Document deletion functions
+        let fileToDelete = '';
+
+        function confirmDeleteDocument(fileName) {
+            fileToDelete = fileName;
+            document.getElementById('delete-file-name').textContent = fileName;
+            document.getElementById('delete-confirm-modal').style.display = 'block';
+        }
+
+        function closeDeleteConfirmModal() {
+            document.getElementById('delete-confirm-modal').style.display = 'none';
+            fileToDelete = '';
+        }
+
+        function proceedWithDelete() {
+            if (fileToDelete) {
+                deleteDocument(fileToDelete);
+                closeDeleteConfirmModal();
+            }
+        }
+
+        function deleteDocument(fileName) {
+            // Show loading state on confirm button
+            const confirmBtn = document.getElementById('confirm-delete-btn');
+            const originalBtnText = confirmBtn.innerHTML;
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '⏳ Deleting...';
+            confirmBtn.style.opacity = '0.6';
+
+            // Also update delete buttons in the document list
+            const deleteButtons = document.querySelectorAll('button[onclick*="' + fileName + '"]');
+            deleteButtons.forEach(button => {
+                button.disabled = true;
+                button.innerHTML = '<span>⏳</span> Deleting...';
+                button.style.opacity = '0.6';
+            });
+
+            // Make delete request
+            fetch('{{ url_for("delete_document") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    file_name: fileName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Show success notification
+                    showNotification('success', `✅ ${data.message}`, `Deleted ${data.deleted_items.embedding_records} embeddings and ${data.deleted_items.document_records} document records.`);
+
+                    // Wait a moment then refresh the page
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    // Show error message
+                    showNotification('error', '❌ Deletion Failed', data.message);
+
+                    // Restore button states
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalBtnText;
+                    confirmBtn.style.opacity = '1';
+
+                    deleteButtons.forEach(button => {
+                        button.disabled = false;
+                        button.innerHTML = '<span>🗑️</span> Delete Document';
+                        button.style.opacity = '1';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                showNotification('error', '❌ Network Error', `Error deleting document: ${error.message}`);
+
+                // Restore button states
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalBtnText;
+                confirmBtn.style.opacity = '1';
+
+                deleteButtons.forEach(button => {
+                    button.disabled = false;
+                    button.innerHTML = '<span>🗑️</span> Delete Document';
+                    button.style.opacity = '1';
+                });
+            });
+        }
+
+        // Notification system
+        function showNotification(type, title, message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'linear-gradient(135deg, #32CD32 0%, #228B22 100%)' : 'linear-gradient(135deg, #DC143C 0%, #B91C1C 100%)'};
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+                z-index: 2000;
+                max-width: 400px;
+                animation: slideIn 0.3s ease-out;
+            `;
+
+            notification.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 8px;">${title}</div>
+                <div style="font-size: 14px;">${message}</div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 5000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function refreshDocumentsList() {
+            window.location.reload();
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('health-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeHealthModal();
+            }
+        });
+
+        document.getElementById('documents-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDocumentsModal();
+            }
+        });
+
+        document.getElementById('delete-confirm-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteConfirmModal();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('delete-confirm-modal').style.display === 'block') {
+                    closeDeleteConfirmModal();
+                } else if (document.getElementById('documents-modal').style.display === 'block') {
+                    closeDocumentsModal();
+                } else if (document.getElementById('health-modal').style.display === 'block') {
+                    closeHealthModal();
+                }
+            }
+        });
+
+        // Drag and drop functionality
+        const fileInput = document.getElementById('file');
+        const dropZone = fileInput;
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.style.border = '2px dashed #4682B4';
+            dropZone.style.backgroundColor = '#eff6ff';
+        }
+
+        function unhighlight(e) {
+            dropZone.style.border = '2px dashed #ddd';
+            dropZone.style.backgroundColor = '';
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(fileInput);
+            }
+        }
+
+        // Auto-refresh page if upload is in progress (to show results)
+        window.addEventListener('beforeunload', function() {
+            if (uploadInProgress) {
+                // Allow the upload to complete
+                return undefined;
+            }
+        });
+    </script>
+
+{% endblock %}

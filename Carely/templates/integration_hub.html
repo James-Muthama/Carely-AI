@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <header>
+        <a href="{{ url_for('homepage') }}">
+            <h1>Carely AI</h1>
+        </a>
+    </header>
+    
+    <div id="left_column">
+        <a href="{{ url_for('profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('profile_image') }}"
+                             alt="Profile Photo"
+                             id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('chat_interface') }}" id="dashboard_link">Business Carely <br>Assistant</a>
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}"
+                     alt="Logout Image"
+                     id="logout_image">
+            </div>
+            <a href="{{ url_for('logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+
+        <div id="integration_header">
+            <h2>Integrations</h2>
+            <p>
+                Carely seamlessly integrates with your essential business tools
+                to unify workflows and enhance AI assistance.
+            </p>
+        </div>
+
+        <div id="integration_options">
+            <h3>Available Integrations</h3>
+
+            <div class="integration-row">
+
+                <!-- Google -->
+                <div class="google_integration_block">
+                        <img src="{{ url_for('static', filename='images/Google_logo.webp') }}"
+                             alt="Google Workspace"
+                             class="integration_logo">
+                    <p>
+                        Integrate Google Workspace for efficient email,
+                        calendar, and document management.
+                    </p>
+                </div>
+
+                <!-- WhatsApp -->
+                <div class="whatsapp_integration_block">
+                        <img src="{{ url_for('static', filename='images/Whatsapp_logo.webp') }}"
+                             alt="WhatsApp Business"
+                             class="integration_logo">
+                    <p>
+                        Connect WhatsApp Business to automate customer
+                        communication and messaging workflows.
+                    </p>
+                </div>
+
+                <!-- Microsoft -->
+                <div class="ms_office_integration_block">
+                        <img src="{{ url_for('static', filename='images/Microsoft_logo.png') }}"
+                             alt="Microsoft Office"
+                             class="integration_logo">
+                    <p>
+                        Link Microsoft Office suite for streamlined document,
+                        spreadsheet, and presentation handling.
+                    </p>
+                </div>
+
+                <!-- Zoho -->
+                <div class="zoho_integration_block">
+                        <img src="{{ url_for('static', filename='images/zoho_logo.png') }}"
+                             alt="Zoho"
+                             class="integration_logo">
+                    <p>
+                        Integrate Zoho CRM for comprehensive customer relationship
+                        and sales management.
+                    </p>
+                </div>
+
+                <!-- Instagram -->
+                <div class="instagram_integration_block">
+                        <img src="{{ url_for('static', filename='images/instagram_logo.png') }}"
+                             alt="Instagram"
+                             class="integration_logo">
+                    <p>
+                        Connect Instagram for social media management and
+                        audience engagement.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <style>
+        #integration_options {
+            margin-top: 20px;
+        }
+
+        #integration_options h3 {
+            margin-bottom: 20px;
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        .integration-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .google_integration_block,
+        .whatsapp_integration_block,
+        .ms_office_integration_block,
+        .zoho_integration_block,
+        .instagram_integration_block {
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .google_integration_block:hover,
+        .whatsapp_integration_block:hover,
+        .ms_office_integration_block:hover,
+        .zoho_integration_block:hover,
+        .instagram_integration_block:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .integration_logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            transition: transform 0.2s ease;
+        }
+
+        .google_integration_block:hover .integration_logo,
+        .whatsapp_integration_block:hover .integration_logo,
+        .ms_office_integration_block:hover .integration_logo,
+        .zoho_integration_block:hover .integration_logo,
+        .instagram_integration_block:hover .integration_logo {
+            transform: scale(1.05);
+        }
+
+        .google_integration_block a,
+        .whatsapp_integration_block a,
+        .ms_office_integration_block a,
+        .zoho_integration_block a,
+        .instagram_integration_block a {
+            display: block;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .google_integration_block p,
+        .whatsapp_integration_block p,
+        .ms_office_integration_block p,
+        .zoho_integration_block p,
+        .instagram_integration_block p {
+            margin: 0;
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        #integration_header h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #1e293b;
+            font-size: 24px;
+        }
+
+        #integration_header p {
+            margin: 0;
+            font-size: 16px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .integration-row {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .google_integration_block,
+            .whatsapp_integration_block,
+            .ms_office_integration_block,
+            .zoho_integration_block,
+            .instagram_integration_block {
+                max-width: 100%;
+                width: 250px;
+            }
+
+            .integration_logo {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+
+{% endblock %}
+

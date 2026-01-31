@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<header>
+        <a href="{{ url_for('home') }}"><h1>Carely AI</h1></a>
+        <nav>
+            <a href=" {{ url_for('login')}}">Login</a>
+        </nav>
+    </header>
+
+<div class="card">
+    <h1>Create Account</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-message {{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form name="signup_form" method="POST" action="{{ url_for('user_signup') }}">
+        <label for="name">Company Name</label>
+        <input type="text" name="name" class="field" required>
+
+        <label for="email">Company Email</label>
+        <input type="email" name="email" class="field" required>
+
+        <label for="phone_no">Company Phone Number</label>
+        <input type="tel" name="phone_no" class="field" pattern="[0-9]{10}" required>
+
+        <label for="password">Company Password</label>
+        <input type="password" name="password" class="field" required>
+
+        <!-- reCAPTCHA v2 Checkbox -->
+        <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
+
+        <input type="submit" value="Sign Up" class="btn">
+    </form>
+</div>
+
+<footer>
+        <p>Copyright &copy; 2024 All Rights Reserved. By Carely AI</p>
+</footer>
+
+<!-- Include reCAPTCHA v2 Checkbox script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<!-- Custom CSS -->
+<style>
+    footer{
+        position: relative;
+        top: 50px;
+    }
+</style>
+{% endblock %}
+
+

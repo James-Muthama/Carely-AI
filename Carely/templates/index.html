@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <header>
+    <a href="{{ url_for('home') }}"><h1>Carely AI</h1></a>
+        <nav>
+            <a href="#about">About</a> |
+            <a href=" {{ url_for('login')}}">Login</a>
+        </nav>
+    </header>
+
+    <div id="header-info">
+        <div class="hero-overlay"></div>
+        <img src="/images/Data-Visualization.jpg" alt="Header Image">
+        <div class="hero-content">
+            <h2>Carely AI, your AI-Powered WhatsApp Customer Support Agent</h2>
+            <p>Upload your support documents and let Carely handle customer queries with instant, accurate, and human-like responses.</p>
+        </div>
+    </div>
+
+
+    <div id="about">
+        <h2>What We Do</h2>
+        <p>
+        Carely AI helps small and medium businesses automatically respond to customer messages on WhatsApp using AI trained on their own business information.
+    <br>
+        It provides fast, accurate, and always-on customer support so businesses can focus on growing instead of answering repetitive questions.
+        </p>
+    </div>
+
+    <div id="image-above-services">
+        <img src="/images/Demistifyingcustomerservice.jpg" alt="Image Above Services">
+    </div>
+
+    <div id="join-us">
+        <h2>Ready to Get your Customer Support Agent?</h2>
+        <div class="cta-buttons">
+            <a href="{{ url_for('user_signup') }}" class="cta-button primary">Start Free Trial</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>Copyright &copy; 2024 All Rights Reserved. By Carely AI</p>
+    </footer>
+
+{% endblock %}

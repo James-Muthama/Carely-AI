@@ -1,0 +1,25 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+
+# PyCharm/IDE configuration
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Environment variables (Sensitive Data)
+.env
+
+# Databases & Local Storage
+chroma_db_*/
+*.sqlite3
+mongodb_database/
+
+# Application uploads and temporary files
+uploads/
+static/uploads/
+__pycache__/
+*.py[cod]
+*$py.class
