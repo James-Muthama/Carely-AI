@@ -4,7 +4,9 @@
 
     <header>
         <a href="{{ url_for('main.homepage') }}">
-            <h1>Carely AI</h1>
+            <h1>
+                Carely AI
+            </h1>
         </a>
     </header>
 
@@ -47,7 +49,7 @@
                 Define what matters to your business. Manually create tracking categories (e.g., "Complaints," "Pricing Inquiries") or let the Business Analytics Agent scan your uploaded documents to recommend the most relevant categories for your industry automatically.
             <div class="instruction_images">
                 <!-- Upload Business PDF Files -->
-                <a href="{{ url_for('rag.upload_file') }}" class="agent-link">
+                <a href="{{ url_for('business_agent.category_setup') }}" class="agent-link">
                     <div class="upload_pdf_block">
                         <h4>🏷️ Define & Recommend Categories</h4>
                         <p>

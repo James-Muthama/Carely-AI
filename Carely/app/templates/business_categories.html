@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <header>
+        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link" style="background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transform: translateX(5px);">Business Analytics <br> Agent</a>
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+            </div>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">Business Analytics Configuration</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {% if category == 'error' %} <i>⚠️</i>
+                            {% elif category == 'success' %} <i>✅</i>
+                            {% elif category == 'warning' %} <i>⚠️</i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if existing_categories %}
+            
+            <div class="content-box" style="background: linear-gradient(135deg, #32CD32 0%, #228B22 100%); color: white; margin-bottom: 20px;">
+                <h2 style="color: white; margin-top: 0;">✅ Analytics Configured</h2>
+                <p style="margin: 10px 0;">Your Business Analytics Agent is currently tracking the following categories.</p>
+            </div>
+
+            <div class="content-box" style="width: 100%; box-sizing: border-box;">
+                <h2 style="color: #1e293b;">📊 Active Categories</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
+                    {% for category in existing_categories %}
+                    <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                        <h3 style="margin: 0 0 5px 0; color: #1e293b; font-size: 16px;">{{ category.name }}</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 13px;">{{ category.description }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: right;">
+                    <p style="float: left; color: #64748b; margin: 10px 0;">Need to track different topics?</p>
+                    <a href="{{ url_for('business_agent.category_setup') }}"
+                       style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(70, 130, 180, 0.3);">
+                        ⚙️ Change Categories
+                    </a>
+                </div>
+            </div>
+
+        {% else %}
+
+            <div class="content-box" style="background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%); color: white; margin-bottom: 20px;">
+                <h2 style="color: white; margin-top: 0;">⚙️ Setup Required</h2>
+                <p style="margin: 10px 0;">Select the topics you want the AI to track from your customer conversations.</p>
+            </div>
+
+            <form id="category-form">
+                <div style="display: flex; align-items: stretch; gap: 20px; flex-wrap: wrap;">
+
+                    <div class="content-box" style="flex: 1; min-width: 300px; margin-right: 0;">
+                        <h2 style="color: #1e293b;">🤖 AI Recommendations</h2>
+                        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Based on your uploaded business documents, we suggest tracking these topics:</p>
+
+                        {% set suggestions = suggestions if suggestions else [
+                            {'name': 'Pricing Inquiries', 'description': 'Questions regarding costs, discounts, and payment plans.'},
+                            {'name': 'Service Availability', 'description': 'Queries about booking slots, stock, or operating hours.'},
+                            {'name': 'Technical Support', 'description': 'Issues regarding login, errors, or product malfunctions.'},
+                            {'name': 'Complaints', 'description': 'Negative feedback or dissatisfaction with service.'},
+                            {'name': 'Partnership Requests', 'description': 'B2B inquiries or collaboration proposals.'}
+                        ] %}
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            {% for sug in suggestions %}
+                            <label style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; transition: all 0.2s;" class="category-card">
+                                <input type="checkbox" name="selected_categories[]" value="{{ sug.name }}|{{ sug.description }}" style="margin-top: 4px; transform: scale(1.2);">
+                                <div>
+                                    <strong style="color: #1e293b; display: block; margin-bottom: 4px;">{{ sug.name }}</strong>
+                                    <span style="font-size: 13px; color: #64748b; line-height: 1.4; display: block;">{{ sug.description }}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="content-box" style="flex: 1; min-width: 300px;">
+                        <h2 style="color: #1e293b;">➕ Add Custom Category</h2>
+                        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Create your own tracking tags for specific business needs.</p>
+
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; color: #1e293b; margin-bottom: 5px; font-weight: bold;">Category Name</label>
+                                <input type="text" id="custom-name" placeholder="e.g., Refund Requests" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; color: #1e293b; margin-bottom: 5px; font-weight: bold;">Description (for AI)</label>
+                                <textarea id="custom-desc" placeholder="What should the AI look for?" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; height: 80px; box-sizing: border-box; resize: none; font-family: inherit;"></textarea>
+                            </div>
+                            <button type="button" onclick="addCustomCategory()" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%;">
+                                + Add to List
+                            </button>
+                        </div>
+
+                        <div id="custom-list-container" style="margin-top: 20px;">
+                            <h4 style="color: #1e293b; margin-bottom: 10px;">Your Custom List:</h4>
+                            <div id="custom-items" style="display: flex; flex-direction: column; gap: 8px;">
+                                <p style="font-size: 13px; color: #94a3b8; font-style: italic;" id="no-custom-msg">No custom categories added yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-box" style="width: 100%; margin-top: 20px; text-align: center; box-sizing: border-box;">
+                    <p style="color: #64748b; margin-bottom: 15px;">Selected categories will be applied immediately to your dashboard.</p>
+                    <button type="submit" style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; border: none; padding: 15px 40px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 4px 12px rgba(70, 130, 180, 0.3); transition: transform 0.2s;">
+                        💾 Save & Activate Categories
+                    </button>
+                </div>
+            </form>
+
+        {% endif %}
+    </div>
+
+    <script>
+        // CSS for selection effect on checkboxes
+        const cards = document.querySelectorAll('.category-card');
+        cards.forEach(card => {
+            const checkbox = card.querySelector('input[type="checkbox"]');
+
+            // Initial check
+            if(checkbox.checked) card.style.background = '#eff6ff';
+            if(checkbox.checked) card.style.borderColor = '#4682B4';
+
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    card.style.background = '#eff6ff'; // Light blue bg
+                    card.style.borderColor = '#4682B4';
+                } else {
+                    card.style.background = 'transparent';
+                    card.style.borderColor = '#cbd5e1';
+                }
+            });
+        });
+
+        // Function to Add Custom Category via JS
+        function addCustomCategory() {
+            const nameInput = document.getElementById('custom-name');
+            const descInput = document.getElementById('custom-desc');
+            const container = document.getElementById('custom-items');
+            const emptyMsg = document.getElementById('no-custom-msg');
+
+            const name = nameInput.value.trim();
+            const desc = descInput.value.trim();
+
+            if (!name || !desc) {
+                alert("Please enter both a name and a description.");
+                return;
+            }
+
+            if (emptyMsg) emptyMsg.style.display = 'none';
+
+            // Create visual item
+            const itemDiv = document.createElement('div');
+            itemDiv.style.cssText = "background: #f0fdf4; border: 1px solid #32CD32; border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;";
+
+            itemDiv.innerHTML = `
+                <div>
+                    <strong style="color: #1e293b; display: block;">${name}</strong>
+                    <span style="font-size: 12px; color: #64748b;">${desc}</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; color: #DC143C; font-weight: bold;">✕</button>
+
+                <input type="hidden" name="custom_categories[]" value="${name}|${desc}">
+            `;
+
+            container.appendChild(itemDiv);
+
+            // Clear inputs
+            nameInput.value = '';
+            descInput.value = '';
+        }
+
+        // --- UPDATED SUBMIT LOGIC ---
+        document.getElementById('category-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // 1. Gather Data
+            const selectedBoxes = document.querySelectorAll('input[name="selected_categories[]"]:checked');
+            const customInputs = document.querySelectorAll('input[name="custom_categories[]"]');
+
+            if (selectedBoxes.length === 0 && customInputs.length === 0) {
+                alert("Please select at least one category or add a custom one.");
+                return;
+            }
+
+            let finalCategories = [];
+
+            // Parse Selected
+            selectedBoxes.forEach(box => {
+                const parts = box.value.split('|');
+                if(parts.length >= 2) {
+                    finalCategories.push({
+                        name: parts[0],
+                        description: parts[1]
+                    });
+                }
+            });
+
+            // Parse Custom
+            customInputs.forEach(input => {
+                const parts = input.value.split('|');
+                if(parts.length >= 2) {
+                    finalCategories.push({
+                        name: parts[0],
+                        description: parts[1]
+                    });
+                }
+            });
+
+            // 2. Send JSON to the API Route
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Saving...";
+
+            // Use the NEW API URL
+            fetch("{{ url_for('business_agent.manage_categories_api') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    categories: finalCategories
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Reload to show the "Success/Existing Categories" view
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving.');
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+            });
+        });
+    </script>
+
+{% endblock %}

@@ -12,76 +12,72 @@ rag_bp = Blueprint('rag', __name__)
 def customer_agent():
     return render_template('customer_agent.html')
 
+
 @rag_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_file():
     """
-    Handle PDF file upload and process it through the persistent RAG system
+    Handle PDF file upload and process it through the persistent RAG system.
+    UPDATED: Keeps the file on disk so the Business Agent can analyze it later.
     """
     if request.method == 'POST':
         try:
-            # Check if file was uploaded
             if 'file' not in request.files:
                 flash('No file selected', 'error')
                 return redirect(request.url)
 
             file = request.files['file']
 
-            # Check if file was actually selected
             if file.filename == '':
                 flash('No file selected', 'error')
                 return redirect(request.url)
 
-            # Validate file type
             if not allowed_file(file.filename):
                 flash('Only PDF files are allowed', 'error')
                 return redirect(request.url)
 
-            # Secure the filename
             filename = secure_filename(file.filename)
 
-            # Create unique filename to avoid conflicts
+            # Create unique filename
             import uuid
             unique_filename = f"{uuid.uuid4()}_{filename}"
             filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
 
-            # Save the uploaded file
+            # Save the file to disk
             file.save(filepath)
-            flash(f'File {filename} uploaded successfully', 'success')
 
-            # Initialize or get persistent RAG system
+            # Initialize RAG
             rag_system = get_or_create_rag_system()
 
             if rag_system is None:
                 flash('Error initializing RAG system', 'error')
+                # Only delete if INIT fails
                 if os.path.exists(filepath):
-                    os.remove(filepath)  # Clean up uploaded file
+                    os.remove(filepath)
                 return redirect(request.url)
 
-            # Process the PDF through persistent RAG system
-            print(f"Processing PDF through persistent RAG system: {filepath}")
+            print(f"Processing PDF: {filepath}")
+
+            # Process with RAG
+            # Note: We keep the file path in the DB so Business Agent can find it
             success = rag_system.upload_file(filepath)
 
             if success:
-                # Mark RAG system as ready
                 session['rag_system_ready'] = True
                 session['uploaded_filename'] = filename
-                session['processed_file_path'] = filepath
 
-                flash(f'Document {filename} processed successfully! You can now ask questions about it.', 'success')
+                flash(f'Document {filename} processed successfully!', 'success')
 
-                # Clean up the uploaded file after processing (Chroma has persisted the data)
-                try:
-                    if os.path.exists(filepath):
-                        os.remove(filepath)
-                except Exception as e:
-                    print(f"Error cleaning up file: {e}")
+                # --- CHANGE IS HERE ---
+                # We REMOVED the os.remove(filepath) code.
+                # The file now stays in the 'uploads' folder.
+                # ----------------------
 
-                # Redirect to chat/question interface
                 return redirect(url_for('rag.chat_interface'))
 
             else:
-                flash('Error processing the PDF file. Please try again.', 'error')
+                flash('Error processing the PDF file.', 'error')
+                # Only delete if PROCESSING fails
                 if os.path.exists(filepath):
                     os.remove(filepath)
                 return redirect(request.url)
@@ -89,19 +85,13 @@ def upload_file():
         except Exception as e:
             flash(f'An error occurred: {str(e)}', 'error')
             print(f"Upload error: {str(e)}")
-
-            # Clean up file if it exists
-            if 'filepath' in locals() and os.path.exists(filepath):
-                os.remove(filepath)
-
             return redirect(request.url)
 
-    # GET request - show upload form with company's existing documents
+    # GET request handling...
     rag_system = get_or_create_rag_system()
     existing_docs = []
     if rag_system:
         existing_docs = rag_system.get_company_documents()
-        # Check if RAG system is ready (has processed documents)
         session['rag_system_ready'] = len(existing_docs) > 0
 
     return render_template('upload_pdf.html',

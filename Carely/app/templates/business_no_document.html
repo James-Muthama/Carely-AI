@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <header>
+        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link" style="background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transform: translateX(5px);">Business Analytics <br> Agent</a>
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+            </div>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">Analytics Setup</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center;">
+            
+            <div class="content-box" style="max-width: 600px; width: 100%; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+                
+                <div style="font-size: 64px; margin-bottom: 20px;">📄🚫</div>
+                
+                <h2 style="color: #1e293b; margin-bottom: 15px; font-size: 28px;">Document Required</h2>
+                
+                <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                    To generate intelligent analytics categories for your business, Carely AI needs to read your business documentation first.
+                    <br><br>
+                    We cannot suggest tracking categories (like "Refunds" or "Pricing") without knowing what your business does.
+                </p>
+
+                <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #FFD700; border-radius: 8px; padding: 15px; margin-bottom: 30px; text-align: left;">
+                    <strong style="color: #b45309; display: block; margin-bottom: 5px;">🚀 Next Steps:</strong>
+                    <ol style="margin: 0; padding-left: 20px; color: #78350f; font-size: 14px;">
+                        <li>Go to the <strong>Customer Support Agent</strong> page.</li>
+                        <li>Upload your Company Profile or FAQ PDF.</li>
+                        <li>Come back here to configure your Analytics.</li>
+                    </ol>
+                </div>
+
+                <a href="{{ url_for('rag.upload_file') }}"
+                   style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(70, 130, 180, 0.3); display: inline-block; transition: transform 0.2s;">
+                    📤 Go to Document Upload
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+{% endblock %}

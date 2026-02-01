@@ -205,7 +205,10 @@ class CustomerSupportAgent:
 
                 embedding_doc = {
                     "company_id": self.company_id,
-                    "document_id": ObjectId(document_id),
+
+                    # FIX: Remove ObjectId() wrapper. The validator expects a String.
+                    "document_id": str(document_id),
+
                     "chunk_id": f"{document_id}_chunk_{i}",
                     "chunk_text": doc.page_content,
                     "embedding_vector": Binary(pickle.dumps(np.array(embedding_vector))),

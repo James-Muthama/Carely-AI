@@ -11,5 +11,6 @@ class Config:
     EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
     RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY")
     RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY")
+    GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
     UPLOAD_FOLDER = 'uploads'
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB limit

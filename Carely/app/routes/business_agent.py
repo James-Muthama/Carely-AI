@@ -1,14 +1,15 @@
-from flask import Blueprint, render_template, request, jsonify, session, current_app
+from flask import Blueprint, render_template, request, jsonify, session, current_app, redirect, url_for
 from datetime import datetime
 from bson.objectid import ObjectId
 from Carely.app.utils import login_required
 from Carely.mongodb_database.connection import client
+from Carely.business_facing_agent.Business_Agent import BusinessAnalyticsAgent
 
-# Create the Blueprint
+# Create the Blueprint with the name 'business_agent'
 business_bp = Blueprint('business_agent', __name__)
 
 # Initialize Collections
-# (Assuming you created this collection using the validator script provided earlier)
+documents_collection = client.Carely.Company_Documents
 categories_collection = client.Carely.Company_Conversation_Categories
 analytics_collection = client.Carely.Business_Analytics
 
@@ -20,14 +21,13 @@ def business_agent():
     return render_template('business_agent.html')
 
 
-# --- NEW ROUTES FOR BUSINESS ANALYTICS FEATURES ---
-
-@business_bp.route('/business_agent/categories', methods=['GET', 'POST'])
+# --- 1. THE API ROUTE (For Saving Data) ---
+# Changed URL to /api/categories to avoid conflict
+@business_bp.route('/business_agent/api/categories', methods=['GET', 'POST'])
 @login_required
-def manage_categories():
+def manage_categories_api():
     """
-    API Endpoint to Get or Save the business tracking categories.
-    This connects to the 'Company_Conversation_Categories' collection.
+    API Endpoint to Get (JSON) or Save the business tracking categories.
     """
     user_id = session.get('user_id')
     if not user_id:
@@ -36,26 +36,32 @@ def manage_categories():
     company_id = ObjectId(user_id)
 
     if request.method == 'GET':
-        # Retrieve existing categories for this company
         doc = categories_collection.find_one({"company_id": company_id})
-        if doc:
-            return jsonify({
-                'status': 'success',
-                'categories': doc.get('categories', [])
-            })
-        else:
-            return jsonify({'status': 'success', 'categories': []})
+        return jsonify({
+            'status': 'success',
+            'categories': doc.get('categories', []) if doc else []
+        })
 
     if request.method == 'POST':
-        # Save or Update categories
-        data = request.get_json()
-        if not data or 'categories' not in data:
+        # Used by the form in business_categories.html to save data
+        # Check if the request is JSON (API call) or Form Data (HTML Form submit)
+        if request.is_json:
+            data = request.get_json()
+            categories = data.get('categories')
+        else:
+            # Handle standard HTML form submission if necessary,
+            # though your JS likely sends JSON.
+            # For now, we assume your JS sends JSON.
+            data = request.get_json(force=True, silent=True)
+            categories = data.get('categories') if data else []
+
+            # If standard form POST (not JSON), we might need to parse form fields
+            # specific to how you implemented the form logic.
+            # But based on previous steps, we are using JSON.
+
+        if not categories:
             return jsonify({'error': 'Invalid data'}), 400
 
-        categories = data['categories']
-
-        # Validates against the schema you created earlier automatically
-        # (if validator is active on MongoDB)
         try:
             categories_collection.update_one(
                 {"company_id": company_id},
@@ -75,15 +81,60 @@ def manage_categories():
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# --- 2. THE PAGE ROUTE (For Viewing HTML) ---
+# This keeps the original URL you want the user to visit
+@business_bp.route('/business_agent/categories')
+@login_required
+def category_setup():
+    """
+    Renders the HTML page for setting up categories.
+    """
+    company_id = session['user_id']
+
+    # We check for a 'completed' document because we need text to analyze
+    has_document = documents_collection.find_one({
+        "company_id": ObjectId(company_id),
+        "processing_status": "completed"
+    })
+
+    # If no document is found, render the "Blocker" page
+    if not has_document:
+        return render_template('business_no_document.html')
+
+    settings = categories_collection.find_one({"company_id": ObjectId(company_id)})
+
+    existing_categories = settings.get('categories') if settings else None
+
+    suggestions = []
+
+    # Only run Gemini analysis if no categories exist yet
+    if not existing_categories:
+        try:
+            agent = BusinessAnalyticsAgent(
+                google_api_key=current_app.config['GOOGLE_API_KEY'],
+                mongodb_client=client,
+                company_id=session['user_id']
+            )
+            suggestions = agent.generate_category_suggestions()
+        except Exception as e:
+            print(f"Gemini Error: {e}")
+            # Fallback suggestions if API fails
+            suggestions = [
+                {'name': 'General', 'description': 'General inquiries'},
+                {'name': 'Support', 'description': 'Technical support'}
+            ]
+
+    return render_template(
+        'business_categories.html',
+        existing_categories=existing_categories,
+        suggestions=suggestions
+    )
+
+
 @business_bp.route('/business_agent/dashboard_stats', methods=['GET'])
 @login_required
 def dashboard_stats():
-    """
-    API to fetch real-time stats for the Business Analytics Dashboard.
-    (This is a placeholder for where your aggregation logic will go)
-    """
     try:
-        # Example: Fetching simple counts (You will expand this with real RAG analytics later)
         stats = {
             "total_conversations": 0,
             "sentiment_score": "Neutral",
