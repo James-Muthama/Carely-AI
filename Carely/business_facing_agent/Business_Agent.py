@@ -11,8 +11,8 @@ from pydantic import BaseModel, Field
 
 class BusinessAnalyticsAgent:
     """
-    Business Analytics Agent using Gemini 2.0 Flash.
-    Optimized for Hackathons: Fast, Free-Tier Friendly, and supports Native PDFs.
+    Business Analytics Agent using Gemini 1.5 Flash.
+    Fixed: Uses the most reliable Free Tier model to avoid 'Quota Exceeded / Limit 0' errors.
     """
 
     def __init__(self, google_api_key: str, mongodb_client, company_id: str):
@@ -30,8 +30,9 @@ class BusinessAnalyticsAgent:
         self.client = genai.Client(api_key=self.google_api_key)
 
         # --- FIX IS HERE ---
-        # Switched to 2.0 Flash to bypass "Resource Exhausted" / "Limit 0" errors
-        self.model_name = "gemini-2.0-flash"
+        # Switched to 1.5 Flash. This model has the most stable/generous free tier
+        # (15 RPM) and supports PDFs natively.
+        self.model_name = "gemini-1.5-flash"
 
     def _get_document_path(self) -> Optional[str]:
         """Robustly finds the absolute path of the document."""
