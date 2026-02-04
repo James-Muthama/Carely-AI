@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify, session, current_app, redirect, url_for
+import os
+
+from flask import Blueprint, render_template, request, jsonify, session, current_app
 from datetime import datetime
 from bson.objectid import ObjectId
 from Carely.app.utils import login_required
@@ -21,8 +23,6 @@ def business_agent():
     return render_template('business_agent.html')
 
 
-# --- 1. THE API ROUTE (For Saving Data) ---
-# Changed URL to /api/categories to avoid conflict
 @business_bp.route('/business_agent/api/categories', methods=['GET', 'POST'])
 @login_required
 def manage_categories_api():
@@ -43,21 +43,12 @@ def manage_categories_api():
         })
 
     if request.method == 'POST':
-        # Used by the form in business_categories.html to save data
-        # Check if the request is JSON (API call) or Form Data (HTML Form submit)
         if request.is_json:
             data = request.get_json()
             categories = data.get('categories')
         else:
-            # Handle standard HTML form submission if necessary,
-            # though your JS likely sends JSON.
-            # For now, we assume your JS sends JSON.
             data = request.get_json(force=True, silent=True)
             categories = data.get('categories') if data else []
-
-            # If standard form POST (not JSON), we might need to parse form fields
-            # specific to how you implemented the form logic.
-            # But based on previous steps, we are using JSON.
 
         if not categories:
             return jsonify({'error': 'Invalid data'}), 400
@@ -81,8 +72,6 @@ def manage_categories_api():
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-# --- 2. THE PAGE ROUTE (For Viewing HTML) ---
-# This keeps the original URL you want the user to visit
 @business_bp.route('/business_agent/categories')
 @login_required
 def category_setup():
@@ -91,34 +80,32 @@ def category_setup():
     """
     company_id = session['user_id']
 
-    # We check for a 'completed' document because we need text to analyze
+    # Check for 'completed' document
     has_document = documents_collection.find_one({
         "company_id": ObjectId(company_id),
         "processing_status": "completed"
     })
 
-    # If no document is found, render the "Blocker" page
     if not has_document:
         return render_template('business_no_document.html')
 
     settings = categories_collection.find_one({"company_id": ObjectId(company_id)})
-
     existing_categories = settings.get('categories') if settings else None
 
     suggestions = []
 
-    # Only run Gemini analysis if no categories exist yet
+    # Only run Gemini if no categories exist
     if not existing_categories:
         try:
+            # Instantiate the internal class we defined above
             agent = BusinessAnalyticsAgent(
-                google_api_key=current_app.config['GOOGLE_API_KEY'],
+                google_api_key=os.environ.get('GOOGLE_API_KEY'), # Better than config for now
                 mongodb_client=client,
                 company_id=session['user_id']
             )
             suggestions = agent.generate_category_suggestions()
         except Exception as e:
             print(f"Gemini Error: {e}")
-            # Fallback suggestions if API fails
             suggestions = [
                 {'name': 'General', 'description': 'General inquiries'},
                 {'name': 'Support', 'description': 'Technical support'}
