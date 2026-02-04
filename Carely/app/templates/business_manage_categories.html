@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <header>
+        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link" style="background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transform: translateX(5px);">Business Analytics <br> Agent</a>
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+            </div>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">Manage Categories</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {% if category == 'error' %} <i>⚠️</i>
+                            {% elif category == 'success' %} <i>✅</i>
+                            {% elif category == 'warning' %} <i>⚠️</i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="content-box" style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; margin-bottom: 20px;">
+            <h2 style="color: white; margin-top: 0;">⚙️ Category Editor</h2>
+            <p style="margin: 10px 0;">Add new topics or remove obsolete ones. Changes are applied immediately after saving.</p>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+
+            <div class="content-box" style="flex: 1; min-width: 300px; margin-right: 0;">
+                <h2 style="color: #1e293b;">➕ Add Custom Category</h2>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Create your own tracking tags for specific business needs.</p>
+
+                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #1e293b; margin-bottom: 5px; font-weight: bold;">Category Name</label>
+                        <input type="text" id="custom-name" placeholder="e.g., Refund Requests" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; color: #1e293b; margin-bottom: 5px; font-weight: bold;">Description (for AI)</label>
+                        <textarea id="custom-desc" placeholder="What should the AI look for?" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; height: 80px; box-sizing: border-box; resize: none; font-family: inherit;"></textarea>
+                    </div>
+                    <button type="button" onclick="pushToTable()" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%;">
+                        + Add to List ->
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-box" style="flex: 2; min-width: 400px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="color: #1e293b; margin: 0;">📋 Current List</h2>
+                    <span style="font-size: 13px; color: #64748b; background: #f1f5f9; padding: 5px 10px; border-radius: 15px;" id="count-badge">
+                        {{ existing_categories|length }} Items
+                    </span>
+                </div>
+
+                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="text-align: left; padding: 15px; color: #475569; font-size: 14px; width: 30%;">Name</th>
+                                <th style="text-align: left; padding: 15px; color: #475569; font-size: 14px; width: 60%;">Description</th>
+                                <th style="text-align: center; padding: 15px; color: #475569; font-size: 14px; width: 10%;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-table-body">
+                            {% for cat in existing_categories %}
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 15px; color: #1e293b; font-weight: bold;">{{ cat.name }}</td>
+                                <td style="padding: 15px; color: #64748b; font-size: 14px;">{{ cat.description }}</td>
+                                <td style="padding: 15px; text-align: center;">
+                                    <button onclick="deleteRow(this)" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                        🗑️
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div id="empty-state" style="padding: 30px; text-align: center; color: #94a3b8; display: {% if existing_categories %}none{% else %}block{% endif %};">
+                        No categories found. Add one from the left!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-box" style="margin: 40px 15% 20px 25%; background: #f8fafc; border-top: 3px solid #4682B4; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: center; align-items: center; gap: 30px; flex-wrap: wrap;">
+                <span style="color: #64748b; font-size: 14px;">Changes are local until saved.</span>
+
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="{{ url_for('business_agent.category_setup') }}" style="color: #64748b; text-decoration: none;">Cancel</a>
+                    <button id="save-btn" onclick="saveAllChanges()" style="background: linear-gradient(135deg, #32CD32 0%, #228B22 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(34, 139, 34, 0.3);">
+                        💾 Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const tableBody = document.getElementById('categories-table-body');
+        const emptyState = document.getElementById('empty-state');
+        const countBadge = document.getElementById('count-badge');
+
+        function updateCount() {
+            const rows = tableBody.querySelectorAll('tr');
+            countBadge.innerText = rows.length + " Items";
+            if (rows.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+            }
+        }
+
+        // 1. Function to Move Input Data to Table
+        function pushToTable() {
+            const nameInput = document.getElementById('custom-name');
+            const descInput = document.getElementById('custom-desc');
+
+            const name = nameInput.value.trim();
+            const desc = descInput.value.trim();
+
+            if (!name || !desc) {
+                alert("Please enter both a Category Name and a Description.");
+                return;
+            }
+
+            // Create new row HTML
+            const newRow = document.createElement('tr');
+            newRow.style.borderBottom = "1px solid #f1f5f9";
+            newRow.style.backgroundColor = "#f0fdf4"; // Light green highlight for new items
+
+            newRow.innerHTML = `
+                <td style="padding: 15px; color: #1e293b; font-weight: bold;">${name}</td>
+                <td style="padding: 15px; color: #64748b; font-size: 14px;">${desc}</td>
+                <td style="padding: 15px; text-align: center;">
+                    <button onclick="deleteRow(this)" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                        🗑️
+                    </button>
+                </td>
+            `;
+
+            tableBody.appendChild(newRow);
+
+            // Clear inputs
+            nameInput.value = '';
+            descInput.value = '';
+
+            updateCount();
+        }
+
+        // 2. Function to Delete Row
+        function deleteRow(btn) {
+            const row = btn.closest('tr');
+            row.remove();
+            updateCount();
+        }
+
+        // 3. Function to Save Data to API
+        function saveAllChanges() {
+            const rows = tableBody.querySelectorAll('tr');
+            let finalCategories = [];
+
+            if (rows.length === 0) {
+                if(!confirm("You are about to save an EMPTY list. This will disable analytics. Continue?")) {
+                    return;
+                }
+            }
+
+            // Loop through table rows and scrape data
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('td');
+                finalCategories.push({
+                    name: cols[0].innerText.trim(),
+                    description: cols[1].innerText.trim()
+                });
+            });
+
+            // UI Feedback
+            const saveBtn = document.getElementById('save-btn');
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = "Saving...";
+            saveBtn.disabled = true;
+
+            // Send to Flask API
+            fetch("{{ url_for('business_agent.manage_categories_api') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    categories: finalCategories
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Redirect back to setup page to show "Active" state
+                    window.location.href = "{{ url_for('business_agent.category_setup') }}";
+                } else {
+                    alert('Error: ' + data.message);
+                    saveBtn.innerText = originalText;
+                    saveBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Check console.');
+                saveBtn.innerText = originalText;
+                saveBtn.disabled = false;
+            });
+        }
+    </script>
+{% endblock %}
