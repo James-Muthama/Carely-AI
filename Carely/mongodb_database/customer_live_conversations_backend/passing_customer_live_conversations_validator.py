@@ -5,8 +5,8 @@ import os
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.append(project_root)
 
-from mongodb_database.connection import client
-from company_conversation_validator import company_conversations_validator
+from Carely.mongodb_database.connection import client
+from customer_live_conversations_validator import customer_live_conversations_validator
 
 db = client.Carely
 
@@ -14,19 +14,19 @@ db = client.Carely
 print("Available collections:", db.list_collection_names())
 
 # The correct collection name should match what's used in your RAG system code
-collection_name = "Company_Conversations"  # This matches the code: self.conversations_collection = self.db.CompanyConversations
+collection_name = "Customer_Live_Conversations"  # This matches the code: self.conversations_collection = self.db.CompanyConversations
 
 try:
     # Check if collection exists
     if collection_name in db.list_collection_names():
         print(f"Collection '{collection_name}' exists, applying validator...")
         # Collection exists, modify it
-        result = db.command("collMod", collection_name, validator=company_conversations_validator)
+        result = db.command("collMod", collection_name, validator=customer_live_conversations_validator)
         print(f"Validator applied to existing collection! Result: {result}")
     else:
         print(f"Collection '{collection_name}' doesn't exist, creating it with validator...")
         # Collection doesn't exist, create it with validator
-        db.create_collection(collection_name, validator=company_conversations_validator)
+        db.create_collection(collection_name, validator=customer_live_conversations_validator)
         print("Collection created with validator!")
 
         # Create recommended indexes
