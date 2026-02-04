@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <header>
+        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link" style="background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transform: translateX(5px);">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
+        
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+            </div>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">WhatsApp Integration</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {% if category == 'error' %} <i>⚠️</i>
+                            {% elif category == 'success' %} <i>✅</i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="content-box" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; margin-bottom: 30px;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="font-size: 40px;">💬</div>
+                <div>
+                    <h2 style="color: white; margin: 0 0 5px 0;">Connect WhatsApp Business</h2>
+                    <p style="margin: 0; opacity: 0.9;">
+                        Integrate your number to enable AI-powered support. Your agent will automatically handle customer queries using your business documents.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            
+            <div class="content-box" style="flex: 2; min-width: 400px;">
+                <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+                    🔧 API Configuration
+                </h3>
+                
+                <form id="whatsapp-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        
+                        <div>
+                            <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
+                                WhatsApp Phone Number
+                            </label>
+                            <input type="text" name="phone_number" placeholder="e.g., 254712345678" required
+                                   style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
+                                Phone Number ID
+                            </label>
+                            <input type="text" name="phone_number_id" placeholder="From Meta Developer Portal" required
+                                   style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
+                            WhatsApp Business Account ID (WABA ID)
+                        </label>
+                        <input type="text" name="waba_id" placeholder="Found in Business Settings" required
+                               style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
+                            Permanent Access Token (System User)
+                        </label>
+                        <input type="password" name="access_token" placeholder="EAAG..." required
+                               style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                        <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                            We encrypt this token securely. Make sure it has 'whatsapp_business_messaging' permission.
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
+                            Webhook Verify Token
+                        </label>
+                        <input type="text" name="verify_token" value="carely_ai_secure_token_{{ session['user_id'] }}" readonly
+                               style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background-color: #f1f5f9; color: #64748b; box-sizing: border-box;">
+                        <p style="font-size: 12px; color: #128C7E; margin-top: 5px;">
+                            Copy this token to your Meta App Configuration.
+                        </p>
+                    </div>
+
+                    <button type="submit" id="connect-btn" 
+                            style="width: 100%; background: #25D366; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s;">
+                        🔗 Connect WhatsApp Number
+                    </button>
+                </form>
+            </div>
+
+            <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
+                
+                <div class="content-box" style="text-align: center; padding: 30px;">
+                    <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                        <span style="font-size: 30px; filter: grayscale(100%);">🤖</span>
+                    </div>
+                    <h3 style="margin: 0; color: #64748b;">Current Status</h3>
+                    <p style="color: #94a3b8; font-weight: bold; margin-top: 5px;">🔴 Disconnected</p>
+                </div>
+
+                <div class="content-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                    <h4 style="margin-top: 0; color: #1e293b;">📝 Quick Setup Guide</h4>
+                    <ol style="padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.6;">
+                        <li style="margin-bottom: 10px;">Go to <a href="https://developers.facebook.com/" target="_blank" style="color: #128C7E; text-decoration: none;">Meta for Developers</a> and create an App.</li>
+                        <li style="margin-bottom: 10px;">Add the <strong>WhatsApp</strong> product to your app.</li>
+                        <li style="margin-bottom: 10px;">Generate a <strong>System User Token</strong> in Business Settings.</li>
+                        <li style="margin-bottom: 10px;">Copy the <strong>Phone Number ID</strong> and <strong>WABA ID</strong> from the API Setup page.</li>
+                        <li>Paste credentials here and click Connect.</li>
+                    </ol>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('whatsapp-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('connect-btn');
+            const originalText = btn.innerText;
+            
+            // UI Feedback
+            btn.disabled = true;
+            btn.innerHTML = "⏳ Verifying Credentials...";
+            btn.style.backgroundColor = "#64748b";
+
+            // Gather Data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            // API Call (You will need to create this route)
+            fetch("{{ url_for('rag.connect_whatsapp_api') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("✅ Success! WhatsApp connected.");
+                    window.location.reload();
+                } else {
+                    alert("❌ Connection Failed: " + data.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    btn.style.backgroundColor = "#25D366";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred. Check console.");
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                btn.style.backgroundColor = "#25D366";
+            });
+        });
+    </script>
+{% endblock %}
