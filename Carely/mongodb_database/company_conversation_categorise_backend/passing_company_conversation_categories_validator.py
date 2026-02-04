@@ -5,7 +5,7 @@ import os
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.append(project_root)
 
-from mongodb_database.connection import client
+from Carely.mongodb_database.connection import client
 from company_conversation_categories_validator import company_conversation_categories_validator
 
 db = client.Carely
