@@ -24,11 +24,13 @@ def create_app():
     from Carely.app.routes.main import main_bp
     from Carely.app.routes.rag_agent import rag_bp
     from Carely.app.routes.business_agent import business_bp
+    from Carely.app.routes.whatsapp_integration import whatsapp_bp
 
     # 5. Register Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(rag_bp)
     app.register_blueprint(business_bp)
+    app.register_blueprint(whatsapp_bp)
 
     return app
