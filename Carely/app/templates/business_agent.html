@@ -22,10 +22,11 @@
             </div>
         </a>
 
-        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">
+            Customer Support <br> Agent
+        </a>
 
-        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link"
-           style="background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transform: translateX(5px);">
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link" class="active-link">
            Business Analytics <br> Agent
         </a>
 
@@ -40,7 +41,6 @@
     </div>
 
     <div id="content">
-
         <div id="inst_msg">
             <h2>Carely AI Business Analytics Agent</h2>
         </div>
@@ -93,16 +93,25 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <style>
-        /* --- Sidebar Hover Effects --- */
+        /* --- Sidebar Logic --- */
+
         #upload_link, #dashboard_link {
             transition: all 0.3s ease;
+            background-color: transparent;
         }
 
-        /* Forces the hover state to match the active state */
+        /* Active State (Business Analytics Agent default) */
+        .active-link {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(5px);
+        }
+
+        /* Hover Effect for BOTH links */
         #upload_link:hover, #dashboard_link:hover {
             background-color: #ffffff !important;
             color: #1e293b !important;
@@ -110,166 +119,54 @@
             transform: translateX(5px);
         }
 
-        /* --- Existing Styles --- */
-        #agent_setup_options {
-            margin-top: 20px;
+        /* THE FIX:
+           When #upload_link is hovered -> Force #dashboard_link to be transparent
+           AND set text color to WHITE.
+        */
+        #upload_link:hover ~ #dashboard_link {
+            background-color: transparent !important;
+            color: #ffffff !important; /* Forces text to be white */
+            box-shadow: none !important;
+            transform: none !important;
         }
 
-        #agent_setup_options h3 {
-            margin-bottom: 20px;
-            color: #1e293b;
-            font-size: 20px;
+        /* --- Rest of your CSS --- */
+        #agent_setup_options { margin-top: 20px; }
+        #agent_setup_options h3 { margin-bottom: 20px; color: #1e293b; font-size: 20px; }
+        .agent-setup-row { display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin-bottom: 30px; }
+        .agent-link { text-decoration: none; color: inherit; }
+
+        .upload_pdf_block, .customer_agent_block, .integration_tools_block {
+            flex: 1; min-width: 280px; max-width: 400px; text-align: center; padding: 30px;
+            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;
         }
 
-        .agent-setup-row {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 40px;
-            flex-wrap: wrap;
-            margin-bottom: 30px;
+        .upload_pdf_block:hover, .customer_agent_block:hover, .integration_tools_block:hover {
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); transform: translateY(-3px); border-color: #3b82f6;
         }
 
-        .agent-setup-row-single {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .agent-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .upload_pdf_block,
-        .customer_agent_block,
-        .integration_tools_block {
-            flex: 1;
-            min-width: 280px;
-            max-width: 400px;
-            text-align: center;
-            padding: 30px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .upload_pdf_block:hover,
-        .customer_agent_block:hover,
-        .integration_tools_block:hover {
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-            transform: translateY(-3px);
-            border-color: #3b82f6;
-        }
-
-        .setup_logo {
-            width: 100px;
-            height: 100px;
-            object-fit: contain;
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-
-        .upload_pdf_block:hover .setup_logo,
-        .customer_agent_block:hover .setup_logo,
-        .integration_tools_block:hover .setup_logo {
-            transform: scale(1.1);
-        }
-
-        .upload_pdf_block h4,
-        .customer_agent_block h4,
-        .integration_tools_block h4 {
-            margin: 0 0 15px 0;
-            font-size: 18px;
-            color: #1e293b;
-            font-weight: 600;
-        }
-
-        .upload_pdf_block p,
-        .customer_agent_block p,
-        .integration_tools_block p {
-            margin: 0;
-            font-size: 14px;
-            color: #64748b;
-            line-height: 1.5;
-        }
-
-        #customer_agent_header h2 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: #1e293b;
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        #customer_agent_header p {
-            margin: 0;
-            font-size: 16px;
-            color: #64748b;
-            line-height: 1.6;
-            max-width: 800px;
-        }
+        .setup_logo { width: 100px; height: 100px; object-fit: contain; margin-bottom: 20px; transition: transform 0.3s ease; }
+        .upload_pdf_block:hover .setup_logo, .customer_agent_block:hover .setup_logo, .integration_tools_block:hover .setup_logo { transform: scale(1.1); }
+        .upload_pdf_block h4, .customer_agent_block h4, .integration_tools_block h4 { margin: 0 0 15px 0; font-size: 18px; color: #1e293b; font-weight: 600; }
+        .upload_pdf_block p, .customer_agent_block p, .integration_tools_block p { margin: 0; font-size: 14px; color: #64748b; line-height: 1.5; }
+        #customer_agent_header h2 { margin-top: 0; margin-bottom: 10px; color: #1e293b; font-size: 28px; font-weight: 700; }
+        #customer_agent_header p { margin: 0; font-size: 16px; color: #64748b; line-height: 1.6; max-width: 800px; }
 
         @media (max-width: 768px) {
-            .agent-setup-row {
-                flex-direction: column;
-                align-items: center;
-                gap: 25px;
-            }
-
-            .upload_pdf_block,
-            .customer_agent_block,
-            .integration_tools_block {
-                max-width: 100%;
-                width: 300px;
-                padding: 25px;
-            }
-
-            .setup_logo {
-                width: 80px;
-                height: 80px;
-            }
-
-            #customer_agent_header h2 {
-                font-size: 24px;
-            }
+            .agent-setup-row { flex-direction: column; align-items: center; gap: 25px; }
+            .upload_pdf_block, .customer_agent_block, .integration_tools_block { max-width: 100%; width: 300px; padding: 25px; }
+            .setup_logo { width: 80px; height: 80px; }
+            #customer_agent_header h2 { font-size: 24px; }
         }
 
-        /* Additional styling for better visual hierarchy */
-        .upload_pdf_block {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        }
-
-        .customer_agent_block {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        }
-
-        .integration_tools_block {
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        }
-
-        .upload_pdf_block:hover {
-            background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
-        }
-
-        .customer_agent_block:hover {
-            background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
-        }
-
-        .integration_tools_block:hover {
-            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        }
-
-        .integration_logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            margin-bottom: 15px;
-            transition: transform 0.2s ease;
-        }
-
+        .upload_pdf_block { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+        .customer_agent_block { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
+        .integration_tools_block { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); }
+        .upload_pdf_block:hover { background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%); }
+        .customer_agent_block:hover { background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%); }
+        .integration_tools_block:hover { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); }
+        .integration_logo { width: 40px; height: 40px; object-fit: contain; margin-bottom: 15px; transition: transform 0.2s ease; }
     </style>
 
 {% endblock %}
