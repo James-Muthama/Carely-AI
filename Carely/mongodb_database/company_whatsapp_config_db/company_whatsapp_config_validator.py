@@ -1,5 +1,5 @@
-# Collection: Company_WhatsApp_Config
-# Purpose: Stores credentials for connecting to the Meta/WhatsApp Cloud API
+# Company_WhatsApp_Config Collection Validator
+# Stores encrypted credentials for WhatsApp Business API integration
 
 company_whatsapp_config_validator = {
     "$jsonSchema": {
@@ -10,53 +10,55 @@ company_whatsapp_config_validator = {
             "phone_number_id",
             "waba_id",
             "access_token",
-            "verify_token"
+            "verify_token",
+            "status",
+            "updated_at"
         ],
-        "additionalProperties": False,  # Strict schema to prevent junk data
+        "additionalProperties": False,
         "properties": {
             "_id": {
                 "bsonType": "objectId"
             },
             "company_id": {
                 "bsonType": "objectId",
-                "description": "Links config to the specific company user"
+                "description": "Unique identifier linking this config to a specific company user"
             },
-            # --- Fields from your HTML Form ---
             "phone_number": {
                 "bsonType": "string",
-                "description": "The displayed phone number (e.g., 2547...)"
+                "description": "The display phone number (e.g., 254712345678) used for UI reference"
             },
             "phone_number_id": {
                 "bsonType": "string",
-                "description": "The Meta Graph API Phone Number ID"
+                "description": "The Meta Graph API Phone Number ID required for sending messages"
             },
             "waba_id": {
                 "bsonType": "string",
-                "description": "WhatsApp Business Account ID"
+                "description": "The WhatsApp Business Account ID for billing and management"
             },
             "access_token": {
                 "bsonType": "string",
-                "description": "Permanent System User Token (Encrypted ideally)"
+                "description": "ENCRYPTED Permanent System User Token. Must be decrypted via security.py before use."
             },
             "verify_token": {
                 "bsonType": "string",
-                "description": "The token used to verify webhooks from Meta"
+                "description": "The custom token used to verify Webhook handshakes from Meta"
             },
-            # --- Status Tracking ---
             "status": {
+                "bsonType": "string",
                 "enum": ["connected", "disconnected", "error"],
-                "description": "Current status of the integration"
+                "description": "Current status of the integration connection"
             },
             "last_error": {
                 "bsonType": ["string", "null"],
                 "description": "Stores the last error message from Meta if connection fails"
             },
-            # --- Timestamps ---
             "created_at": {
-                "bsonType": "date"
+                "bsonType": "date",
+                "description": "Timestamp when the integration was first set up"
             },
             "updated_at": {
-                "bsonType": "date"
+                "bsonType": "date",
+                "description": "Timestamp when the credentials or status were last updated"
             }
         }
     }

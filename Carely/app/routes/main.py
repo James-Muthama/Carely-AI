@@ -82,11 +82,11 @@ def upload_image():
     # Handle GET request to show the upload form
     return render_template('upload_image.html')
 
-@main_bp.route('/integration')
-def integration():
+@main_bp.route('/whatsapp_integration')
+def whatsapp_integration():
     """Display Google Workspace MCP Client dashboard"""
     try:
-        return render_template('integration_hub.html')
+        return render_template('whatsapp_integration.html')
     except Exception as e:
         return f"Dashboard error: {str(e)}", 500
 

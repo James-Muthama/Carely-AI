@@ -16,9 +16,9 @@
                 </div>
             </div>
         </a>
-        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link" style="background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transform: translateX(5px);">Customer Support <br> Agent</a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
         <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
-        
+
         <div id="logout_image_container">
             <div id="logout_image_cont">
                 <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
@@ -47,9 +47,12 @@
             {% endif %}
         {% endwith %}
 
-        <div class="content-box" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; margin-bottom: 30px;">
+        <div class="content-box whatsapp-hero">
             <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="font-size: 40px;">💬</div>
+                <img src="{{ url_for('static', filename='images/Whatsapp_logo.webp') }}"
+                     alt="WhatsApp Logo"
+                     class="integration_logo_large">
+
                 <div>
                     <h2 style="color: white; margin: 0 0 5px 0;">Connect WhatsApp Business</h2>
                     <p style="margin: 0; opacity: 0.9;">
@@ -59,88 +62,74 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; width: 100%;">
+
             <div class="content-box" style="flex: 2; min-width: 400px;">
                 <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
                     🔧 API Configuration
                 </h3>
-                
+
                 <form id="whatsapp-form">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                        
+
                         <div>
-                            <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
-                                WhatsApp Phone Number
-                            </label>
-                            <input type="text" name="phone_number" placeholder="e.g., 254712345678" required
-                                   style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                            <label class="form-label">WhatsApp Phone Number</label>
+                            <input type="text" name="phone_number" placeholder="e.g., 254712345678" value="{{ phone_number }}" required class="form-input">
                         </div>
 
                         <div>
-                            <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
-                                Phone Number ID
-                            </label>
-                            <input type="text" name="phone_number_id" placeholder="From Meta Developer Portal" required
-                                   style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                            <label class="form-label">Phone Number ID</label>
+                            <input type="text" name="phone_number_id" placeholder="From Meta Developer Portal" value="{{ phone_number_id }}" required class="form-input">
                         </div>
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
-                            WhatsApp Business Account ID (WABA ID)
-                        </label>
-                        <input type="text" name="waba_id" placeholder="Found in Business Settings" required
-                               style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                        <label class="form-label">WhatsApp Business Account ID (WABA ID)</label>
+                        <input type="text" name="waba_id" placeholder="Found in Business Settings" value="{{ waba_id }}" required class="form-input">
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
-                            Permanent Access Token (System User)
-                        </label>
-                        <input type="password" name="access_token" placeholder="EAAG..." required
-                               style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+                        <label class="form-label">Permanent Access Token (System User)</label>
+                        <input type="password" name="access_token" placeholder="{% if has_token %}(Token is saved & hidden){% else %}EAAG...{% endif %}" {% if not has_token %}required{% endif %} class="form-input">
                         <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
                             We encrypt this token securely. Make sure it has 'whatsapp_business_messaging' permission.
                         </p>
                     </div>
 
                     <div style="margin-bottom: 30px;">
-                        <label style="display: block; color: #64748b; font-size: 14px; font-weight: bold; margin-bottom: 5px;">
-                            Webhook Verify Token
-                        </label>
-                        <input type="text" name="verify_token" value="carely_ai_secure_token_{{ session['user_id'] }}" readonly
-                               style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background-color: #f1f5f9; color: #64748b; box-sizing: border-box;">
+                        <label class="form-label">Webhook Verify Token</label>
+                        <input type="text" name="verify_token" value="carely_ai_secure_token_{{ session['user_id'] }}" readonly class="form-input read-only-input">
                         <p style="font-size: 12px; color: #128C7E; margin-top: 5px;">
                             Copy this token to your Meta App Configuration.
                         </p>
                     </div>
 
-                    <button type="submit" id="connect-btn" 
-                            style="width: 100%; background: #25D366; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s;">
-                        🔗 Connect WhatsApp Number
+                    <button type="submit" id="connect-btn" class="submit-btn">
+                        🔗 {% if status == 'connected' %}Update Connection{% else %}Connect WhatsApp Number{% endif %}
                     </button>
                 </form>
             </div>
 
-            <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
-                
-                <div class="content-box" style="text-align: center; padding: 30px;">
-                    <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
-                        <span style="font-size: 30px; filter: grayscale(100%);">🤖</span>
-                    </div>
-                    <h3 style="margin: 0; color: #64748b;">Current Status</h3>
-                    <p style="color: #94a3b8; font-weight: bold; margin-top: 5px;">🔴 Disconnected</p>
-                </div>
+            <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 20px; width: 100%;">
 
-                <div class="content-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                <div class="content-box" style="background-color: #f8fafc; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box;">
                     <h4 style="margin-top: 0; color: #1e293b;">📝 Quick Setup Guide</h4>
                     <ol style="padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.6;">
-                        <li style="margin-bottom: 10px;">Go to <a href="https://developers.facebook.com/" target="_blank" style="color: #128C7E; text-decoration: none;">Meta for Developers</a> and create an App.</li>
-                        <li style="margin-bottom: 10px;">Add the <strong>WhatsApp</strong> product to your app.</li>
-                        <li style="margin-bottom: 10px;">Generate a <strong>System User Token</strong> in Business Settings.</li>
-                        <li style="margin-bottom: 10px;">Copy the <strong>Phone Number ID</strong> and <strong>WABA ID</strong> from the API Setup page.</li>
-                        <li>Paste credentials here and click Connect.</li>
+                        <li style="margin-bottom: 12px;">
+                            <strong>Create App:</strong> Go to <a href="https://developers.facebook.com/apps/" target="_blank" style="color: #128C7E; text-decoration: none; font-weight: bold;">Meta Developers</a>, create a <strong>Business</strong> App, and add the <strong>WhatsApp</strong> product.
+                        </li>
+                        <li style="margin-bottom: 12px;">
+                            <strong>Get IDs:</strong> In the Meta sidebar, go to <em>WhatsApp > API Setup</em>. Copy the <strong>Phone Number ID</strong> and <strong>WABA ID</strong>.
+                        </li>
+                        <li style="margin-bottom: 12px;">
+                            <strong>Get Token:</strong> Go to <a href="https://business.facebook.com/settings/system-users" target="_blank" style="color: #128C7E; text-decoration: none; font-weight: bold;">Business Settings</a> -> <em>Users > System Users</em>. Add an Admin user and generate a token with <code>whatsapp_business_messaging</code> permission.
+                        </li>
+                        <li style="margin-bottom: 12px;">
+                            <strong>Connect Carely:</strong> Paste the IDs and Token into the form on the left and click <strong>Connect</strong>.
+                        </li>
+                        <li>
+                            <strong>Verify Webhook:</strong> In Meta (<em>WhatsApp > Configuration</em>), click <strong>Edit</strong>. Enter your server URL and copy the <strong>Verify Token</strong> from the box above.
+                        </li>
                     </ol>
                 </div>
 
@@ -154,18 +143,15 @@
 
             const btn = document.getElementById('connect-btn');
             const originalText = btn.innerText;
-            
-            // UI Feedback
+
             btn.disabled = true;
             btn.innerHTML = "⏳ Verifying Credentials...";
             btn.style.backgroundColor = "#64748b";
 
-            // Gather Data
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            // API Call (You will need to create this route)
-            fetch("{{ url_for('rag.connect_whatsapp_api') }}", {
+            fetch("{{ url_for('whatsapp_integration.connect_whatsapp_api') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -193,4 +179,78 @@
             });
         });
     </script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #content {
+            min-height: 100vh;
+            padding-bottom: 50px;
+            box-sizing: border-box;
+            background-color: #f1f5f9;
+        }
+
+        .whatsapp-hero {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .integration_logo_large {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .form-label {
+            display: block;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .read-only-input {
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .submit-btn:hover {
+            background: #128C7E;
+        }
+
+        @media (max-width: 768px) {
+            #content {
+                padding: 20px;
+            }
+        }
+    </style>
+
 {% endblock %}
