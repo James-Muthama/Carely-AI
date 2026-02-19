@@ -195,9 +195,31 @@
         }
 
         .whatsapp-hero {
-            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-            color: white;
+            /* A light, subtle slate-gray gradient for a clean look */
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            
+            /* IMPORTANT: Change text color from white to dark slate for readability */
+            color: #1e293b;
+            
             margin-bottom: 30px;
+            
+            /* A subtle border for definition */
+            border: 1px solid #cbd5e1;
+            
+            /* A soft, modern shadow for depth */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        
+        /* Ensure the title inside the hero is the correct dark color */
+        .whatsapp-hero h2 {
+            color: #1e293b !important; /* Override any inline white color */
+            margin: 0 0 5px 0;
+        }
+        
+        /* Style the paragraph text to be a slightly lighter slate */
+        .whatsapp-hero p {
+            margin: 0;
+            color: #475569; /* Slate-600 for secondary text */
         }
 
         .integration_logo_large {
