@@ -2,8 +2,16 @@
 
 {% block content %}
 
-    <header>
-        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 15px 50px; width: 100%; box-sizing: border-box; background-color: #1e293b;">
+        <a href="{{ url_for('main.homepage') }}" style="text-decoration: none;">
+            <h1 style="margin: 0; color: white; white-space: nowrap;">Carely AI</h1>
+        </a>
+
+        <div class="header-nav">
+            <a href="{{ url_for('rag.upload_file') }}" class="header-btn active-header-btn">Upload Business PDF Files</a>
+            <a href="{{ url_for('rag.chat_interface') }}" class="header-btn">Carely AI Customer Support Agent</a>
+            <a href="{{ url_for('whatsapp_integration.whatsapp_integration_page') }}" class="header-btn">WhatsApp Integration</a>
+        </div>
     </header>
 
     <div id="left_column">
@@ -32,7 +40,6 @@
             <p id="welcome">Upload Business Document</p>
         </div>
 
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-container">
@@ -52,7 +59,6 @@
             {% endif %}
         {% endwith %}
 
-        <!-- System Status Overview -->
         {% if rag_ready %}
             <div class="content-box" style="background: linear-gradient(135deg, #32CD32 0%, #228B22 100%); color: white; margin-bottom: 20px;">
                 <h2 style="color: white; margin-top: 0;">✅ System Ready!</h2>
@@ -73,9 +79,7 @@
             </div>
         {% endif %}
 
-        <!-- Container for side-by-side boxes -->
         <div style="margin-bottom: 20px; display: flex; align-items: stretch; gap: 20px;">
-            <!-- Upload Form -->
             <div class="content-box" style="margin-right: 0; width: calc(50% - 10px);">
                 <h2 style="color: #1e293b;">📤 Select PDF File</h2>
                 <form method="POST" enctype="multipart/form-data" class="upload-form" id="upload-form">
@@ -105,7 +109,6 @@
                     </div>
                 </div>
 
-                <!-- Upload Progress (Hidden by default) -->
                 <div id="upload-progress" style="display: none; margin-top: 20px;">
                     <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #cbd5e1;">
                         <div style="font-size: 24px; margin-bottom: 10px;">⚙️</div>
@@ -118,7 +121,6 @@
                 </div>
             </div>
 
-            <!-- File Requirements -->
             <div class="content-box" style="width: calc(50% - 10px);">
                 <h2 style="color: #1e293b;">📋 File Requirements & Tips</h2>
 
@@ -154,9 +156,7 @@
             </div>
         </div>
 
-        <!-- Container for side-by-side boxes -->
         <div style="margin-bottom: 20px; display: flex; align-items: stretch; gap: 20px;">
-            <!-- Existing Documents Section -->
             {% if existing_documents %}
                 <div class="content-box">
                     <h2 style="color: #1e293b;">📚 Your Processed Documents</h2>
@@ -195,7 +195,6 @@
                 </div>
             {% endif %}
 
-            <!-- Current Status -->
             {% if rag_ready %}
                 <div class="content-box">
                     <h2 style="color: #1e293b;">🎯 Next Steps</h2>
@@ -231,7 +230,6 @@
             {% endif %}
         </div>
 
-        <!-- System Health Modal (Hidden by default) -->
         <div id="health-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 700px; width: 90%; max-height: 80%; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
                 <h3 style="margin-top: 0; color: #1e293b;">🩺 System Health Check</h3>
@@ -240,7 +238,6 @@
             </div>
         </div>
 
-        <!-- Uploaded Documents Modal (Hidden by default) -->
         <div id="documents-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 800px; width: 90%; max-height: 80%; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
                 <h3 style="margin-top: 0; color: #1e293b;">📄 All Uploaded Documents</h3>
@@ -294,7 +291,6 @@
                                                 </div>
                                             {% endif %}
 
-                                            <!-- Delete Button -->
                                             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: right;">
                                                 <button onclick="confirmDeleteDocument('{{ doc.file_name }}')"
                                                         style="background: linear-gradient(135deg, #DC143C 0%, #B91C1C 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; margin-left: auto; box-shadow: 0 2px 6px rgba(220, 20, 60, 0.3);"
@@ -332,7 +328,6 @@
             </div>
         </div>
 
-        <!-- Delete Confirmation Modal -->
         <div id="delete-confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1001;">
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
                 <div style="text-align: center;">
@@ -365,6 +360,68 @@
         </div>
 
     </div>
+
+    <style>
+        /* --- HEADER NAV STYLES --- */
+        .header-nav {
+            display: flex;
+            flex: 1;
+            justify-content: flex-start;
+            padding-left: 60px;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .header-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #cbd5e1;
+            background-color: transparent;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .active-header-btn {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .header-btn:hover {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .header-nav:hover .active-header-btn:not(:hover) {
+            background-color: transparent !important;
+            color: #cbd5e1 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        @media (max-width: 1024px) {
+            .header-nav {
+                gap: 20px;
+                padding-left: 30px;
+            }
+            .header-btn {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-nav {
+                display: none;
+            }
+        }
+    </style>
 
     <script>
         let uploadInProgress = false;
