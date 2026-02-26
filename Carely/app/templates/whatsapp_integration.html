@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <header>
-        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 15px 50px; width: 100%; box-sizing: border-box; background-color: #1e293b;">
+        <a href="{{ url_for('main.homepage') }}" style="text-decoration: none;">
+            <h1 style="margin: 0; color: white; white-space: nowrap;">Carely AI</h1>
+        </a>
+
+        <div class="header-nav">
+            <a href="{{ url_for('rag.upload_file') }}" class="header-btn">Upload Business PDF Files</a>
+            <a href="{{ url_for('rag.chat_interface') }}" class="header-btn">Carely AI Customer Support Agent</a>
+            <a href="#" class="header-btn active-header-btn">WhatsApp Integration</a>
+        </div>
     </header>
 
     <div id="left_column">
@@ -125,7 +133,7 @@
                             <strong>Get Token:</strong> Go to <a href="https://business.facebook.com/settings/system-users" target="_blank" style="color: #128C7E; text-decoration: none; font-weight: bold;">Business Settings</a> -> <em>Users > System Users</em>. Add an Admin user and generate a token with <code>whatsapp_business_messaging</code> permission.
                         </li>
                         <li style="margin-bottom: 12px;">
-                            <strong>Connect Carely:</strong> Paste the IDs and Token into the form on the left and click <strong>Connect</strong>.
+                            <strong>Connect Carely AI:</strong> Paste the IDs and Token into the form on the left and click <strong>Connect</strong>.
                         </li>
                         <li>
                             <strong>Verify Webhook:</strong> In Meta (<em>WhatsApp > Configuration</em>), click <strong>Edit</strong>. Enter your server URL and copy the <strong>Verify Token</strong> from the box above.
@@ -194,32 +202,68 @@
             background-color: #f1f5f9;
         }
 
+        /* --- NEW HEADER NAV STYLES --- */
+        .header-nav {
+            display: flex;
+            flex: 1;
+            /* CHANGED: This moves the links to the left side of the remaining space */
+            justify-content: flex-start;
+            /* Adds a nice gap between the 'Carely AI' logo and the first link */
+            padding-left: 60px;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .header-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #cbd5e1;
+            background-color: transparent;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .active-header-btn {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .header-btn:hover {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .header-nav:hover .active-header-btn:not(:hover) {
+            background-color: transparent !important;
+            color: #cbd5e1 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        /* ----------------------------- */
+
         .whatsapp-hero {
-            /* A light, subtle slate-gray gradient for a clean look */
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            
-            /* IMPORTANT: Change text color from white to dark slate for readability */
             color: #1e293b;
-            
             margin-bottom: 30px;
-            
-            /* A subtle border for definition */
             border: 1px solid #cbd5e1;
-            
-            /* A soft, modern shadow for depth */
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
-        
-        /* Ensure the title inside the hero is the correct dark color */
+
         .whatsapp-hero h2 {
-            color: #1e293b !important; /* Override any inline white color */
+            color: #1e293b !important;
             margin: 0 0 5px 0;
         }
-        
-        /* Style the paragraph text to be a slightly lighter slate */
+
         .whatsapp-hero p {
             margin: 0;
-            color: #475569; /* Slate-600 for secondary text */
+            color: #475569;
         }
 
         .integration_logo_large {
@@ -268,9 +312,23 @@
             background: #128C7E;
         }
 
+        @media (max-width: 1024px) {
+            .header-nav {
+                gap: 20px;
+                padding-left: 30px;
+            }
+            .header-btn {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+        }
+
         @media (max-width: 768px) {
             #content {
                 padding: 20px;
+            }
+            .header-nav {
+                display: none;
             }
         }
     </style>
