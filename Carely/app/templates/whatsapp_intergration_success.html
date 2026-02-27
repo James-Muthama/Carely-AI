@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 15px 50px; width: 100%; box-sizing: border-box; background-color: #1e293b;">
+        <a href="{{ url_for('main.homepage') }}" style="text-decoration: none;">
+            <h1 style="margin: 0; color: white; white-space: nowrap;">Carely AI</h1>
+        </a>
+
+        <div class="header-nav">
+            <a href="{{ url_for('rag.upload_file') }}" class="header-btn">Upload Business PDF Files</a>
+            <a href="{{ url_for('rag.chat_interface') }}" class="header-btn">Carely AI Customer Support Agent</a>
+            <a href="{{ url_for('whatsapp_integration.whatsapp_integration_page') }}" class="header-btn active-header-btn">WhatsApp Integration</a>
+        </div>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
+
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+            </div>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">WhatsApp Integration Dashboard</p>
+        </div>
+
+        <div class="content-box" style="text-align: center; padding: 40px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #25D366; margin-bottom: 30px;">
+            <div style="font-size: 60px; margin-bottom: 10px;">✅</div>
+            <h2 style="color: #1e293b; margin-top: 0;">Successfully Connected</h2>
+            <p style="color: #475569; font-size: 16px;">
+                Carely AI has verified your credentials and is securely connected to your Meta account.
+            </p>
+            <div style="display: inline-block; background: white; padding: 10px 20px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px; font-weight: bold; color: #1e293b;">
+                📱 Connected Number: {{ config.phone_number }}
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            
+            <div class="content-box" style="flex: 2; min-width: 400px;">
+                <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+                    🔗 Final Step: Configure Webhook
+                </h3>
+                <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+                    To allow Meta to send incoming customer messages to your AI agent, you must configure the Webhook in your Meta Developer Dashboard.
+                </p>
+
+                <div style="margin-bottom: 20px;">
+                    <label class="form-label">Callback URL</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" value="{{ webhook_url }}" readonly class="form-input read-only-input" id="webhook-url">
+                        <button onclick="copyToClipboard('webhook-url')" class="copy-btn">Copy</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label class="form-label">Verify Token</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" value="{{ config.verify_token }}" readonly class="form-input read-only-input" id="verify-token">
+                        <button onclick="copyToClipboard('verify-token')" class="copy-btn">Copy</button>
+                    </div>
+                </div>
+
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; font-size: 14px; color: #1e3a8a;">
+                    <strong>Instructions:</strong> Go to Meta Developers > WhatsApp > Configuration. Click "Edit" next to Webhook. Paste the URL and Token above. Once verified, click "Manage" on Webhook fields and subscribe to <strong>messages</strong>.
+                </div>
+            </div>
+
+            <div class="content-box" style="flex: 1; min-width: 300px;">
+                <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+                    ⚙️ Manage Connection
+                </h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <p style="color: #64748b; font-size: 14px; margin-top: 0;">Need to update your access token or connect a different phone number?</p>
+                    <a href="{{ url_for('whatsapp_integration.whatsapp_integration_page') }}" style="display: block; text-align: center; background: #f1f5f9; color: #1e293b; text-decoration: none; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; transition: background 0.2s;">
+                        Edit Configuration
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+            navigator.clipboard.writeText(copyText.value);
+            
+            // Temporary visual feedback
+            const btn = copyText.nextElementSibling;
+            const originalText = btn.innerText;
+            btn.innerText = "Copied!";
+            btn.style.backgroundColor = "#32CD32";
+            btn.style.color = "white";
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.backgroundColor = "";
+                btn.style.color = "";
+            }, 2000);
+        }
+    </script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #content {
+            min-height: 100vh;
+            padding-bottom: 50px;
+            box-sizing: border-box;
+            background-color: #f1f5f9;
+        }
+
+        .header-nav {
+            display: flex;
+            flex: 1;
+            justify-content: flex-start;
+            padding-left: 60px;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .header-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #cbd5e1;
+            background-color: transparent;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .active-header-btn {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .header-btn:hover {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .header-nav:hover .active-header-btn:not(:hover) {
+            background-color: transparent !important;
+            color: #cbd5e1 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .form-label {
+            display: block;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .read-only-input {
+            background-color: #f1f5f9;
+            color: #64748b;
+            font-family: monospace;
+        }
+
+        .copy-btn {
+            background: #e2e8f0;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 0 15px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #cbd5e1;
+        }
+
+        @media (max-width: 768px) {
+            #content {
+                padding: 20px;
+            }
+            .header-nav {
+                display: none;
+            }
+        }
+    </style>
+{% endblock %}

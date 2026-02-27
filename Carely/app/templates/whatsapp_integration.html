@@ -169,8 +169,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert("✅ Success! WhatsApp connected.");
-                    window.location.reload();
+                    // Redirect to the success dashboard page instead of reloading
+                    window.location.href = "{{ url_for('whatsapp_integration.whatsapp_success_page') }}";
                 } else {
                     alert("❌ Connection Failed: " + data.message);
                     btn.disabled = false;
