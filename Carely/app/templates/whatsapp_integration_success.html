@@ -40,19 +40,27 @@
             <p id="welcome">WhatsApp Integration Dashboard</p>
         </div>
 
-        <div class="content-box" style="text-align: center; padding: 40px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #25D366; margin-bottom: 30px;">
-            <div style="font-size: 60px; margin-bottom: 10px;">✅</div>
-            <h2 style="color: #1e293b; margin-top: 0;">Successfully Connected</h2>
-            <p style="color: #475569; font-size: 16px;">
-                Carely AI has verified your credentials and is securely connected to your Meta account.
-            </p>
-            <div style="display: inline-block; background: white; padding: 10px 20px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 15px; font-weight: bold; color: #1e293b;">
-                📱 Connected Number: {{ config.phone_number }}
+        <div class="content-box whatsapp-hero">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <img src="{{ url_for('static', filename='images/Whatsapp_logo.webp') }}"
+                     alt="WhatsApp Logo"
+                     class="integration_logo_large">
+
+                <div>
+                    <h2 style="color: #1e293b; margin: 0 0 5px 0;">Connect WhatsApp Business</h2>
+                    <p style="margin: 0; color: #475569;">
+                        Integrate your number to enable AI-powered support. Your agent will automatically handle customer queries using your business documents.
+                    </p>
+
+                    <div style="display: inline-block; background: white; padding: 6px 12px; border-radius: 6px; border: 1px solid #25D366; margin-top: 10px; font-size: 13px; font-weight: bold; color: #1e293b;">
+                        ✅ Connected Number: {{ config.phone_number }}
+                    </div>
+                </div>
             </div>
         </div>
 
         <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            
+
             <div class="content-box" style="flex: 2; min-width: 400px;">
                 <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
                     🔗 Final Step: Configure Webhook
@@ -64,7 +72,7 @@
                 <div style="margin-bottom: 20px;">
                     <label class="form-label">Callback URL</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" value="{{ webhook_url }}" readonly class="form-input read-only-input" id="webhook-url">
+                        <input type="text" value="https://carely-support.onrender.com/webhook" readonly class="form-input read-only-input" id="webhook-url">
                         <button onclick="copyToClipboard('webhook-url')" class="copy-btn">Copy</button>
                     </div>
                 </div>
@@ -72,7 +80,7 @@
                 <div style="margin-bottom: 20px;">
                     <label class="form-label">Verify Token</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" value="{{ config.verify_token }}" readonly class="form-input read-only-input" id="verify-token">
+                        <input type="text" name="verify_token" value="carely_ai_secure_token_{{ session['user_id'] }}" readonly class="form-input read-only-input" id="verify-token">
                         <button onclick="copyToClipboard('verify-token')" class="copy-btn">Copy</button>
                     </div>
                 </div>
@@ -82,14 +90,15 @@
                 </div>
             </div>
 
-            <div class="content-box" style="flex: 1; min-width: 300px;">
+            <div class="content-box" style="flex: 0 1 320px; height: fit-content;">
                 <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
                     ⚙️ Manage Connection
                 </h3>
-                
-                <div style="margin-bottom: 20px;">
+
+                <div style="margin-bottom: 10px;">
                     <p style="color: #64748b; font-size: 14px; margin-top: 0;">Need to update your access token or connect a different phone number?</p>
-                    <a href="{{ url_for('whatsapp_integration.whatsapp_integration_page') }}" style="display: block; text-align: center; background: #f1f5f9; color: #1e293b; text-decoration: none; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; transition: background 0.2s;">
+
+                    <a href="{{ url_for('whatsapp_integration.edit_whatsapp_integration') }}" style="display: block; text-align: center; background: #f1f5f9; color: #1e293b; text-decoration: none; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; transition: background 0.2s;">
                         Edit Configuration
                     </a>
                 </div>
@@ -103,14 +112,14 @@
             copyText.select();
             copyText.setSelectionRange(0, 99999); // For mobile devices
             navigator.clipboard.writeText(copyText.value);
-            
+
             // Temporary visual feedback
             const btn = copyText.nextElementSibling;
             const originalText = btn.innerText;
             btn.innerText = "Copied!";
             btn.style.backgroundColor = "#32CD32";
             btn.style.color = "white";
-            
+
             setTimeout(() => {
                 btn.innerText = originalText;
                 btn.style.backgroundColor = "";
@@ -173,6 +182,21 @@
             color: #cbd5e1 !important;
             box-shadow: none !important;
             transform: none !important;
+        }
+
+        .whatsapp-hero {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            margin-bottom: 30px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .integration_logo_large {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
 
         .form-label {

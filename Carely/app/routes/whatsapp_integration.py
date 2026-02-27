@@ -49,7 +49,7 @@ def whatsapp_integration_page():
     company_id = session.get('user_id')
     config = whatsapp_config_collection.find_one({"company_id": ObjectId(company_id)})
 
-    # If already connected, optionally redirect them straight to the success/dashboard page
+    # Automatically redirect if already successfully connected
     if config and config.get('status') == 'connected':
         return redirect(url_for('whatsapp_integration.whatsapp_success_page'))
 
@@ -75,15 +75,35 @@ def whatsapp_success_page():
     company_id = session.get('user_id')
     config = whatsapp_config_collection.find_one({"company_id": ObjectId(company_id)})
 
+    # Ensure they are actually connected before viewing this page
     if not config or config.get('status') != 'connected':
         return redirect(url_for('whatsapp_integration.whatsapp_integration_page'))
 
-    # Build the full webhook URL for the UI
-    host_url = request.host_url.rstrip('/')
-    webhook_url = f"{host_url}/webhook"
+    # We MUST pass config to the template so your {{ config.phone_number }} tags work
+    return render_template('whatsapp_integration_success.html', config=config)
 
-    return render_template('whatsapp_success.html', config=config, webhook_url=webhook_url)
 
+@whatsapp_bp.route('/whatsapp_integration/edit', methods=['GET'])
+@login_required
+def edit_whatsapp_integration():
+    """Bypasses the connected redirect to allow users to update their config."""
+    company_id = session.get('user_id')
+    config = whatsapp_config_collection.find_one({"company_id": ObjectId(company_id)})
+
+    has_token = False
+    if config and config.get("access_token"):
+        has_token = True
+
+    context = {
+        "status": config.get("status", "disconnected") if config else "disconnected",
+        "phone_number": config.get("phone_number", "") if config else "",
+        "phone_number_id": config.get("phone_number_id", "") if config else "",
+        "waba_id": config.get("waba_id", "") if config else "",
+        "has_token": has_token
+    }
+
+    # Render the standard integration form, but it will be pre-filled with context variables
+    return render_template('whatsapp_integration.html', **context)
 
 @whatsapp_bp.route('/whatsapp_integration/connect', methods=['POST'])
 @login_required
