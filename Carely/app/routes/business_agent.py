@@ -14,6 +14,7 @@ business_bp = Blueprint('business_agent', __name__)
 documents_collection = client.Carely.Company_Documents
 categories_collection = client.Carely.Company_Conversation_Categories
 analytics_collection = client.Carely.Business_Analytics
+live_conversations_collection = client.Carely.Customer_Live_Conversations
 
 
 @business_bp.route('/business_agent', methods=['GET'])
@@ -156,19 +157,154 @@ def manage_categories():
     )
 
 
-@business_bp.route('/business_agent/dashboard_stats', methods=['GET'])
+@business_bp.route('/business_agent/analytics_dashboard', methods=['GET'])
+@login_required
+def analytics_dashboard():
+    """Display the Chart.js Analytics Dashboard"""
+    return render_template('analytics_dashboard.html')
+
+
+@business_bp.route('/business_agent/api/dashboard_stats', methods=['GET'])
 @login_required
 def dashboard_stats():
     """
-    Endpoint for future dashboard statistics (placeholder).
+    In-depth real-time aggregation of WhatsApp messages.
+    Provides Categories, Sentiment, Volume over time, and Recent Messages.
     """
     try:
-        stats = {
-            "total_conversations": 0,
-            "sentiment_score": "Neutral",
-            "top_category": "None",
-            "pending_optimizations": 0
-        }
-        return jsonify(stats)
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        company_id = ObjectId(user_id)
+
+        # 1. Fetch tracked categories
+        category_doc = categories_collection.find_one({"company_id": company_id})
+        tracked_categories = [cat['name'] for cat in category_doc.get('categories', [])] if category_doc else []
+
+        # 2. Get all user messages (flattened) sorted by newest first
+        pipeline = [
+            {"$match": {"company_id": company_id}},
+            {"$unwind": "$messages"},
+            {"$match": {"messages.role": "user"}},
+            {"$project": {
+                "phone": "$customer_phone",
+                "content": "$messages.content",
+                "category": "$messages.category",
+                "sentiment": "$messages.sentiment_score",
+                "timestamp": "$messages.timestamp"
+            }},
+            {"$sort": {"timestamp": -1}}
+        ]
+
+        user_messages = list(live_conversations_collection.aggregate(pipeline))
+
+        # 3. Process Data for the Dashboard
+        total_messages = len(user_messages)
+        total_conversations = live_conversations_collection.count_documents({"company_id": company_id})
+
+        category_counts = {cat: 0 for cat in tracked_categories}
+        category_counts["Uncategorized"] = 0
+
+        sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
+        total_sentiment_score = 0
+        valid_sentiment_count = 0
+
+        # For Volume over time (last 7 days)
+        from collections import defaultdict
+        daily_volume = defaultdict(int)
+
+        recent_messages = []
+
+        for idx, msg in enumerate(user_messages):
+            # A. Categories
+            cat = msg.get("category")
+            if cat in category_counts:
+                category_counts[cat] += 1
+            elif cat:
+                category_counts[cat] = category_counts.get(cat, 0) + 1
+            else:
+                category_counts["Uncategorized"] += 1
+
+            # B. Sentiment (Thresholds: > 0.25 is Positive, < -0.25 is Negative)
+            sentiment = msg.get("sentiment")
+            if sentiment is not None:
+                total_sentiment_score += sentiment
+                valid_sentiment_count += 1
+                if sentiment > 0.25:
+                    sentiment_counts["Positive"] += 1
+                elif sentiment < -0.25:
+                    sentiment_counts["Negative"] += 1
+                else:
+                    sentiment_counts["Neutral"] += 1
+            else:
+                sentiment_counts["Neutral"] += 1
+
+            # C. Daily Volume
+            timestamp = msg.get("timestamp")
+            if timestamp:
+                # Group by YYYY-MM-DD
+                date_str = timestamp.strftime('%Y-%m-%d')
+                daily_volume[date_str] += 1
+
+            # D. Recent Messages (Grab the top 5)
+            if idx < 5:
+                # Mask phone number for privacy on dashboard
+                phone = msg.get("phone", "")
+                masked_phone = f"...{phone[-4:]}" if len(phone) >= 4 else phone
+
+                recent_messages.append({
+                    "phone": masked_phone,
+                    "content": msg.get("content", ""),
+                    "category": cat or "Uncategorized",
+                    "sentiment": sentiment if sentiment is not None else 0,
+                    "time": timestamp.strftime('%I:%M %p, %b %d') if timestamp else "Unknown"
+                })
+
+        # Calculate Averages & Top Metrics
+        top_category = "None"
+        if total_messages > 0:
+            top_category = max(category_counts, key=category_counts.get)
+
+        avg_sentiment = (total_sentiment_score / valid_sentiment_count) if valid_sentiment_count > 0 else 0
+        overall_sentiment_label = "Neutral 😐"
+        if avg_sentiment > 0.25:
+            overall_sentiment_label = "Positive 😃"
+        elif avg_sentiment < -0.25:
+            overall_sentiment_label = "Negative 😠"
+
+        # Sort daily volume chronologically
+        sorted_dates = sorted(daily_volume.keys())[-7:]  # Last 7 active days
+        volume_data = [daily_volume[date] for date in sorted_dates]
+        # Format dates to be more readable (e.g. "Feb 27")
+        formatted_dates = [datetime.strptime(d, '%Y-%m-%d').strftime('%b %d') for d in sorted_dates]
+
+        return jsonify({
+            "status": "success",
+            "kpis": {
+                "total_conversations": total_conversations,
+                "total_messages_analyzed": total_messages,
+                "top_category": top_category,
+                "overall_sentiment": overall_sentiment_label
+            },
+            "charts": {
+                "categories": {
+                    "labels": list(category_counts.keys()),
+                    "data": list(category_counts.values())
+                },
+                "sentiment": {
+                    "labels": ["Positive", "Neutral", "Negative"],
+                    "data": [sentiment_counts["Positive"], sentiment_counts["Neutral"], sentiment_counts["Negative"]]
+                },
+                "volume": {
+                    "labels": formatted_dates if formatted_dates else ["No Data"],
+                    "data": volume_data if volume_data else [0]
+                }
+            },
+            "recent_messages": recent_messages
+        })
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'error': str(e)}), 500

@@ -7,10 +7,17 @@ from cryptography.fernet import Fernet
 from Carely.app.utils import login_required
 from Carely.mongodb_database.connection import client
 
+# IMPORTANT: Ensure this import points to where you saved the updated CustomerSupportAgent
+from Carely.app.services import CustomerSupportAgent
+
 whatsapp_bp = Blueprint('whatsapp_integration', __name__)
 
+# --- Collections ---
 whatsapp_config_collection = client.Carely.Company_WhatsApp_Config
+live_conversations_collection = client.Carely.Customer_Live_Conversations
 
+
+# --- Helper Functions ---
 
 def get_cipher_suite():
     key = current_app.config.get('ENCRYPTION_KEY')
@@ -43,13 +50,35 @@ def decrypt_data(token: str) -> str:
         return None
 
 
+def send_whatsapp_reply(phone_number_id, access_token, recipient_phone, reply_text):
+    """Sends the AI's response back to the customer via Meta Cloud API."""
+    url = f"https://graph.facebook.com/v18.0/{phone_number_id}/messages"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": recipient_phone,
+        "type": "text",
+        "text": {"body": reply_text}
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code != 200:
+        print(f"WhatsApp API Error: {response.text}")
+    return response
+
+
+# --- UI Routes ---
+
 @whatsapp_bp.route('/whatsapp_integration', methods=['GET'])
 @login_required
 def whatsapp_integration_page():
     company_id = session.get('user_id')
     config = whatsapp_config_collection.find_one({"company_id": ObjectId(company_id)})
 
-    # Automatically redirect if already successfully connected
     if config and config.get('status') == 'connected':
         return redirect(url_for('whatsapp_integration.whatsapp_success_page'))
 
@@ -71,22 +100,18 @@ def whatsapp_integration_page():
 @whatsapp_bp.route('/whatsapp_integration/success', methods=['GET'])
 @login_required
 def whatsapp_success_page():
-    """Renders the success/dashboard page for a connected WhatsApp integration."""
     company_id = session.get('user_id')
     config = whatsapp_config_collection.find_one({"company_id": ObjectId(company_id)})
 
-    # Ensure they are actually connected before viewing this page
     if not config or config.get('status') != 'connected':
         return redirect(url_for('whatsapp_integration.whatsapp_integration_page'))
 
-    # We MUST pass config to the template so your {{ config.phone_number }} tags work
     return render_template('whatsapp_integration_success.html', config=config)
 
 
 @whatsapp_bp.route('/whatsapp_integration/edit', methods=['GET'])
 @login_required
 def edit_whatsapp_integration():
-    """Bypasses the connected redirect to allow users to update their config."""
     company_id = session.get('user_id')
     config = whatsapp_config_collection.find_one({"company_id": ObjectId(company_id)})
 
@@ -102,8 +127,8 @@ def edit_whatsapp_integration():
         "has_token": has_token
     }
 
-    # Render the standard integration form, but it will be pre-filled with context variables
     return render_template('whatsapp_integration.html', **context)
+
 
 @whatsapp_bp.route('/whatsapp_integration/connect', methods=['POST'])
 @login_required
@@ -119,7 +144,6 @@ def connect_whatsapp_api():
 
         access_token_plain = data.get('access_token')
 
-        # Determine the token to use for testing (either newly provided or existing decrypted)
         token_to_test = access_token_plain
         if not token_to_test:
             existing_config = whatsapp_config_collection.find_one({"company_id": ObjectId(company_id)})
@@ -178,8 +202,11 @@ def connect_whatsapp_api():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# --- WEBHOOK ROUTES ---
+
 @whatsapp_bp.route('/webhook', methods=['GET'])
 def webhook_verify():
+    """META REQUIRED: Verifies the webhook URL from the Meta Developer Portal."""
     mode = request.args.get('hub.mode')
     token = request.args.get('hub.verify_token')
     challenge = request.args.get('hub.challenge')
@@ -187,7 +214,6 @@ def webhook_verify():
     if mode and token:
         if mode == 'subscribe':
             exists = whatsapp_config_collection.find_one({"verify_token": token})
-
             if exists:
                 return challenge, 200
             else:
@@ -198,14 +224,102 @@ def webhook_verify():
 
 @whatsapp_bp.route('/webhook', methods=['POST'])
 def webhook_handler():
+    """META REQUIRED: Receives live messages from customers on WhatsApp."""
     try:
         body = request.get_json()
 
         if body.get("object") == "whatsapp_business_account":
-            return jsonify({"status": "received"}), 200
-        else:
-            return jsonify({"status": "ignored", "message": "Not a WhatsApp event"}), 404
+            for entry in body.get("entry", []):
+                for change in entry.get("changes", []):
+                    value = change.get("value", {})
+
+                    # Ensure it's an actual message, not a read-receipt
+                    if "messages" in value:
+                        msg_info = value["messages"][0]
+
+                        # Process text messages
+                        if msg_info.get("type") == "text":
+                            customer_phone = msg_info["from"]
+                            message_text = msg_info["text"]["body"]
+                            phone_number_id = value["metadata"]["phone_number_id"]
+                            customer_name = value.get("contacts", [{}])[0].get("profile", {}).get("name", "Unknown")
+
+                            # 1. Look up the company via phone_number_id
+                            company_config = whatsapp_config_collection.find_one({"phone_number_id": phone_number_id})
+
+                            if company_config:
+                                company_id = company_config['company_id']
+                                encrypted_token = company_config.get('access_token')
+                                access_token = decrypt_data(encrypted_token) if encrypted_token else None
+
+                                if not access_token:
+                                    print("Error: No access token found.")
+                                    continue
+
+                                # 2. Process via Smart Agent (RAG + Classification)
+                                groq_api_key = os.environ.get('GROQ_API_KEY')
+                                agent = CustomerSupportAgent(
+                                    groq_api_key=groq_api_key,
+                                    mongodb_client=client,
+                                    company_id=company_id
+                                )
+
+                                result = agent.process_message(message_text)
+                                ai_reply = result.get('answer', "I'm sorry, I encountered an error.")
+                                category = result.get('category', "Uncategorized")
+                                sentiment = result.get('sentiment_score', 0.0)
+
+                                # 3. Send Reply back to WhatsApp
+                                send_whatsapp_reply(phone_number_id, access_token, customer_phone, ai_reply)
+
+                                # 4. Save to Customer_Live_Conversations matching the schema exactly
+                                now = datetime.now(timezone.utc)
+                                existing_chat = live_conversations_collection.find_one({
+                                    "customer_phone": customer_phone,
+                                    "company_id": company_id
+                                })
+
+                                new_messages = [
+                                    {
+                                        "role": "user",
+                                        "content": message_text,
+                                        "timestamp": now,
+                                        "status": "received",
+                                        "category": category,
+                                        "sentiment_score": sentiment
+                                    },
+                                    {
+                                        "role": "assistant",
+                                        "content": ai_reply,
+                                        "timestamp": now,
+                                        "status": "sent",
+                                        "category": None,
+                                        "sentiment_score": None
+                                    }
+                                ]
+
+                                if existing_chat:
+                                    live_conversations_collection.update_one(
+                                        {"_id": existing_chat["_id"]},
+                                        {
+                                            "$push": {"messages": {"$each": new_messages}},
+                                            "$set": {"last_interaction_at": now, "updated_at": now}
+                                        }
+                                    )
+                                else:
+                                    live_conversations_collection.insert_one({
+                                        "company_id": company_id,
+                                        "customer_phone": customer_phone,
+                                        "customer_name": customer_name,
+                                        "messages": new_messages,
+                                        "last_interaction_at": now,
+                                        "created_at": now,
+                                        "updated_at": now
+                                    })
+
+        return jsonify({"status": "success"}), 200
 
     except Exception as e:
         print(f"Webhook Error: {e}")
-        return jsonify({"status": "error"}), 500
+        # MUST return 200 even on error, otherwise Meta will endlessly retry the webhook
+        return jsonify({"status": "error handled"}), 200

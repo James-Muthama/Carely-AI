@@ -1,8 +1,10 @@
 import os
 import time
+import json
 from typing import Optional, Dict, List, Any
 from datetime import datetime, timezone
 from bson import ObjectId
+from groq import Groq
 
 # Import your modular components
 from .document_processor import DocumentProcessor
@@ -13,58 +15,120 @@ from .retrieval_engine import RetrievalEngine
 
 class CustomerSupportAgent:
     """
-    Orchestrator class for Internal RAG Testing.
-    Delegates logic to specialized modules.
+    Orchestrator for Carely AI.
+    Handles RAG-based answering, Sentiment Analysis, and Category Classification.
     """
 
     def __init__(self, groq_api_key: str, mongodb_client, company_id: str, session_info: Optional[Dict] = None):
         self.groq_api_key = groq_api_key
+        self.groq_client = Groq(api_key=groq_api_key)
 
         # ID Handling
         if isinstance(company_id, str):
-            try:
-                self.company_id = ObjectId(company_id)
-            except:
-                raise ValueError(f"Invalid ObjectId: {company_id}")
+            self.company_id = ObjectId(company_id)
         else:
             self.company_id = company_id
 
-        self.session_info = session_info or {}
         self.db = mongodb_client.Carely
+        self.categories_collection = self.db.Company_Conversation_Categories
         self.documents_collection = self.db.Company_Documents
         self.embeddings_collection = self.db.Company_Embeddings
 
-        # --- MODEL CONFIGURATION ---
-        # Using the flagship 70B model for high-reasoning customer support
-        self.model_name = "llama-3.3-70b-versatile"
+        # Models
+        self.reasoning_model = "llama-3.3-70b-versatile"  # For RAG
+        self.fast_model = "llama-3.1-8b-instant"  # For Classification
 
-        # --- Initialize Sub-Modules ---
+        # Initialize Sub-Modules
         self.doc_processor = DocumentProcessor()
         self.vector_manager = VectorStoreManager(self.company_id, self.db)
         self.history_manager = HistoryManager(self.company_id, self.db)
-
-        # UPDATED: Pass the 70B model name to the RetrievalEngine
         self.retrieval_engine = RetrievalEngine(
             vector_store=None,
             groq_api_key=groq_api_key,
-            model_name=self.model_name
+            model_name=self.reasoning_model
         )
 
-        # --- Load Existing Data ---
+        # Load Existing Data
         self.history_manager.load_history()
-
         if self.vector_manager.load_existing():
-            # If loaded successfully, inject vector store into retrieval engine
             self.retrieval_engine.vector_store = self.vector_manager.vector_store
             self.retrieval_engine.setup_retriever()
             self.retrieval_engine.initialize_chain(self._get_history_text)
 
     def _get_history_text(self):
-        """Helper to format history for the LLM prompt."""
         if not self.history_manager.history:
             return "No previous conversation"
-        # 70B handles context very well, so we can pass the last 3 exchanges
         return "\n".join([f"Q: {q}\nA: {a}" for q, a in self.history_manager.history[-3:]])
+
+    def classify_and_analyze(self, text: str) -> Dict[str, Any]:
+        """
+        Internal method to categorize the message based on user-defined categories.
+        """
+        try:
+            # 1. Fetch company-specific categories
+            category_doc = self.categories_collection.find_one({"company_id": self.company_id})
+            user_categories = [cat['name'] for cat in category_doc.get('categories', [])] if category_doc else []
+
+            # If the user hasn't set categories, we use a default list or "Uncategorized"
+            category_list_str = ", ".join(user_categories) if user_categories else "None (Use 'Uncategorized')"
+
+            prompt = f"""
+            Analyze the following customer message and provide classification.
+
+            Customer Message: "{text}"
+            Available Categories: [{category_list_str}]
+
+            Instructions:
+            1. Select the most relevant category from the list. 
+            2. If no categories are provided or the message doesn't fit, use "Uncategorized".
+            3. Provide a sentiment score between -1.0 (very negative) and 1.0 (very positive).
+
+            Respond ONLY in valid JSON:
+            {{
+                "category": "Selected Category",
+                "sentiment_score": 0.0
+            }}
+            """
+
+            response = self.groq_client.chat.completions.create(
+                model=self.fast_model,
+                messages=[{"role": "system", "content": "You are a precise data classifier."},
+                          {"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+
+            return json.loads(response.choices[0].message.content)
+        except Exception as e:
+            print(f"Classification Error: {e}")
+            return {"category": "Uncategorized", "sentiment_score": 0.0}
+
+    def process_message(self, question: str) -> Dict[str, Any]:
+        """
+        The master method for the Webhook.
+        Returns the answer, the category, and the sentiment in one go.
+        """
+        start_time = time.time()
+
+        # 1. Classification & Sentiment (Async-ready if needed)
+        analysis = self.classify_and_analyze(question)
+
+        # 2. RAG Answer Generation
+        try:
+            answer = self.retrieval_engine.query(question)
+        except Exception as e:
+            answer = "I'm sorry, I encountered an error processing your request."
+            print(f"RAG Error: {e}")
+
+        # 3. Update internal history
+        duration = time.time() - start_time
+        self.history_manager.add_exchange(question, answer, duration)
+
+        return {
+            "answer": answer,
+            "category": analysis.get("category", "Uncategorized"),
+            "sentiment_score": analysis.get("sentiment_score", 0.0),
+            "timestamp": datetime.now(timezone.utc)
+        }
 
     def upload_file(self, pdf_path: str) -> bool:
         """Process a PDF: Load -> Split -> Embed -> Store."""
