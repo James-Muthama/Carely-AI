@@ -14,7 +14,6 @@ customer_live_conversations_validator = {
                 "bsonType": "objectId",
                 "description": "Unique company identifier"
             },
-            # --- CUSTOMER IDENTITY ---
             "customer_phone": {
                 "bsonType": "string",
                 "description": "WhatsApp Phone Number (Unique Key)"
@@ -23,7 +22,6 @@ customer_live_conversations_validator = {
                 "bsonType": ["string", "null"],
                 "description": "WhatsApp Profile Name"
             },
-            # --- CONVERSATION TIMELINE ---
             "messages": {
                 "bsonType": "array",
                 "description": "Chronological list of all messages in this chat",
@@ -48,7 +46,6 @@ customer_live_conversations_validator = {
                             "enum": ["sent", "delivered", "read", "failed", "received"],
                             "description": "WhatsApp delivery status"
                         },
-                        # --- AI CLASSIFICATION FIELDS ---
                         "category": {
                             "bsonType": ["string", "null"],
                             "description": "E.g., 'Pricing', 'Complaint' (Classified by Business Agent)"

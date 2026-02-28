@@ -39,8 +39,11 @@
     </div>
 
     <div id="content">
-        <div id="welcome_msg">
-            <p id="welcome">WhatsApp Analytics Dashboard</p>
+        <div id="welcome_msg" style="display: flex; justify-content: space-between; align-items: center;">
+            <p id="welcome" style="margin: 0;">WhatsApp Analytics Dashboard</p>
+            <button onclick="fetchDashboardData()" id="refresh-btn" style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                <span>🔄</span> Refresh Live Data
+            </button>
         </div>
 
         <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -149,12 +152,15 @@
         .badge-neu { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
         .badge-neg { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
+        #refresh-btn:active { transform: scale(0.95); }
+
         @media (max-width: 1024px) {
             .header-nav { gap: 20px; padding-left: 30px; }
             .header-btn { font-size: 13px; padding: 8px 12px; }
         }
         @media (max-width: 768px) {
             .header-nav { display: none; }
+            #welcome_msg { flex-direction: column; align-items: flex-start; gap: 15px; }
         }
     </style>
 
@@ -163,10 +169,17 @@
             fetchDashboardData();
         });
 
-        // Store chart instances so we can update them safely if needed
-        let barChartInst, lineChartInst, sentimentChartInst;
+        // Store chart instances globally to destroy them before re-rendering
+        let windowLineChartInst = null;
+        let windowSentimentChartInst = null;
+        let windowBarChartInst = null;
 
         function fetchDashboardData() {
+            const btn = document.getElementById('refresh-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = "<span>⏳</span> Updating...";
+            btn.disabled = true;
+
             fetch("{{ url_for('business_agent.dashboard_stats') }}")
                 .then(response => response.json())
                 .then(data => {
@@ -187,17 +200,25 @@
                         document.getElementById('recent-messages-tbody').innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">Error loading data.</td></tr>`;
                     }
                 })
-                .catch(error => console.error("Network Error:", error));
+                .catch(error => console.error("Network Error:", error))
+                .finally(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                });
         }
 
         function renderCharts(chartsData) {
-            // Common chart styling rules
+            // Destroy existing charts to prevent memory leaks/overlapping rendering
+            if(windowLineChartInst) windowLineChartInst.destroy();
+            if(windowSentimentChartInst) windowSentimentChartInst.destroy();
+            if(windowBarChartInst) windowBarChartInst.destroy();
+
             Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
             Chart.defaults.color = '#64748b';
 
             // --- 1. Line Chart (Volume) ---
             const ctxLine = document.getElementById('lineChart').getContext('2d');
-            lineChartInst = new Chart(ctxLine, {
+            windowLineChartInst = new Chart(ctxLine, {
                 type: 'line',
                 data: {
                     labels: chartsData.volume.labels,
@@ -207,7 +228,7 @@
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 2,
-                        tension: 0.3, // slight curve
+                        tension: 0.3,
                         fill: true,
                         pointBackgroundColor: '#fff',
                         pointBorderColor: '#3b82f6',
@@ -227,14 +248,13 @@
 
             // --- 2. Doughnut Chart (Sentiment) ---
             const ctxDoughnut = document.getElementById('sentimentChart').getContext('2d');
-            sentimentChartInst = new Chart(ctxDoughnut, {
+            windowSentimentChartInst = new Chart(ctxDoughnut, {
                 type: 'doughnut',
                 data: {
                     labels: chartsData.sentiment.labels,
                     datasets: [{
                         data: chartsData.sentiment.data,
-                        // Green (Positive), Gray (Neutral), Red (Negative)
-                        backgroundColor: ['#22c55e', '#cbd5e1', '#ef4444'],
+                        backgroundColor: ['#22c55e', '#cbd5e1', '#ef4444'], // Pos, Neu, Neg
                         borderWidth: 2,
                         borderColor: '#ffffff'
                     }]
@@ -247,7 +267,6 @@
             });
 
             // --- 3. Bar Chart (Categories) ---
-            // Filter out empty categories for cleaner view
             let barLabels = [];
             let barData = [];
             for(let i=0; i < chartsData.categories.labels.length; i++){
@@ -259,7 +278,7 @@
             if(barLabels.length === 0) { barLabels = ["No Data Yet"]; barData = [1]; }
 
             const ctxBar = document.getElementById('barChart').getContext('2d');
-            barChartInst = new Chart(ctxBar, {
+            windowBarChartInst = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
                     labels: barLabels,
@@ -290,12 +309,10 @@
 
             let html = '';
             messages.forEach(msg => {
-                // Determine sentiment badge
                 let sentBadge = '<span class="badge badge-neu">Neutral</span>';
                 if (msg.sentiment > 0.25) sentBadge = '<span class="badge badge-pos">Positive 😃</span>';
                 else if (msg.sentiment < -0.25) sentBadge = '<span class="badge badge-neg">Negative 😠</span>';
 
-                // Truncate long messages
                 let displayContent = msg.content;
                 if (displayContent.length > 50) {
                     displayContent = displayContent.substring(0, 50) + "...";
@@ -304,8 +321,8 @@
                 html += `
                     <tr style="border-bottom: 1px solid #f1f5f9;">
                         <td style="padding: 12px; color: #1e293b;">
-                            <strong>${msg.phone}</strong><br>
-                            <span style="font-size: 11px; color: #94a3b8;">${msg.time}</span>
+                            <strong>${msg.customer_name}</strong><br>
+                            <span style="font-size: 11px; color: #94a3b8;">${msg.phone} • ${msg.time}</span>
                         </td>
                         <td style="padding: 12px; color: #475569;">"${displayContent}"</td>
                         <td style="padding: 12px;"><span class="badge badge-cat">${msg.category}</span></td>

@@ -189,6 +189,7 @@ def dashboard_stats():
             {"$match": {"messages.role": "user"}},
             {"$project": {
                 "phone": "$customer_phone",
+                "name": "$customer_name",  # <--- NEW: Pulling the customer name
                 "content": "$messages.content",
                 "category": "$messages.category",
                 "sentiment": "$messages.sentiment_score",
@@ -243,17 +244,20 @@ def dashboard_stats():
             # C. Daily Volume
             timestamp = msg.get("timestamp")
             if timestamp:
-                # Group by YYYY-MM-DD
                 date_str = timestamp.strftime('%Y-%m-%d')
                 daily_volume[date_str] += 1
 
             # D. Recent Messages (Grab the top 5)
             if idx < 5:
-                # Mask phone number for privacy on dashboard
                 phone = msg.get("phone", "")
                 masked_phone = f"...{phone[-4:]}" if len(phone) >= 4 else phone
 
+                # Format the display name cleanly
+                raw_name = msg.get("name")
+                display_name = raw_name if raw_name and raw_name != "Unknown" else "WhatsApp User"
+
                 recent_messages.append({
+                    "customer_name": display_name,  # <--- NEW: Sending to frontend
                     "phone": masked_phone,
                     "content": msg.get("content", ""),
                     "category": cat or "Uncategorized",
@@ -274,9 +278,8 @@ def dashboard_stats():
             overall_sentiment_label = "Negative 😠"
 
         # Sort daily volume chronologically
-        sorted_dates = sorted(daily_volume.keys())[-7:]  # Last 7 active days
+        sorted_dates = sorted(daily_volume.keys())[-7:]
         volume_data = [daily_volume[date] for date in sorted_dates]
-        # Format dates to be more readable (e.g. "Feb 27")
         formatted_dates = [datetime.strptime(d, '%Y-%m-%d').strftime('%b %d') for d in sorted_dates]
 
         return jsonify({
