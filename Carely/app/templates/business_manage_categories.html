@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <header>
-        <a href="{{ url_for('main.homepage') }}"><h1>Carely AI</h1></a>
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 15px 50px; width: 100%; box-sizing: border-box; background-color: #1e293b;">
+        <a href="{{ url_for('main.homepage') }}" style="text-decoration: none;">
+            <h1 style="margin: 0; color: white; white-space: nowrap;">Carely AI</h1>
+        </a>
+
+        <div class="header-nav">
+            <a href="{{ url_for('business_agent.category_setup') }}" class="header-btn">🏷️ Business Analytics Categories</a>
+            <a href="{{ url_for('business_agent.business_agent') }}" class="header-btn">📊 Analytics Dashboard</a>
+            <a href="#" class="header-btn">🚀 Generate Improvement Documents</a>
+        </div>
     </header>
 
     <div id="left_column">
@@ -18,7 +26,6 @@
         </a>
 
         <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
-
         <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
 
         <div id="logout_image_container">
@@ -51,7 +58,7 @@
         {% endwith %}
 
         <div class="content-box" style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; margin-bottom: 20px;">
-            <h2 style="color: white; margin-top: 0;">⚙️ Category Editor</h2>
+            <h2 style="color: white; margin-top: 0;">⚙️ Edit Analytics Category</h2>
             <p style="margin: 10px 0;">Add new topics or remove obsolete ones. Changes are applied immediately after saving.</p>
         </div>
 
@@ -129,6 +136,61 @@
         </div>
 
     </div>
+
+    <style>
+        .header-nav {
+            display: flex;
+            flex: 1;
+            justify-content: flex-start;
+            padding-left: 60px;
+            gap: 40px;
+            align-items: center;
+        }
+        .header-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #cbd5e1;
+            background-color: transparent;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .active-header-btn {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .header-btn:hover {
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .header-nav:hover .active-header-btn:not(:hover) {
+            background-color: transparent !important;
+            color: #cbd5e1 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        @media (max-width: 1024px) {
+            .header-nav {
+                gap: 20px;
+                padding-left: 30px;
+            }
+            .header-btn {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+        }
+        @media (max-width: 768px) {
+            .header-nav {
+                display: none;
+            }
+        }
+    </style>
 
     <script>
         const tableBody = document.getElementById('categories-table-body');
