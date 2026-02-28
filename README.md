@@ -1,62 +1,155 @@
-# Carely AI
+# Carely AI 🚀
 
-**Intelligent Customer Engagement & Business Intelligence Platform**
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/James-Muthama/Carely-AI)
 
-Carely AI is a dual-agent system designed to help small and medium-sized businesses (SMBs) automate customer support while deriving actionable insights from every interaction. Built on **Google’s Gemini Large Language Model (LLM)**, it combines real-time automated support with deep business analytics to create a continuous feedback loop that improves customer service over time.
+**Carely AI** is an advanced, dual-agent Customer Relationship Management (CRM) platform. Originally conceptualized as an agentic-powered CRM solution for a hackathon, Carely bridges the gap between automated customer support and actionable business intelligence.
 
----
-
-## 🚀 About the Project
-
-Carely AI solves the disconnect between customer inquiries and business knowledge. Instead of static chatbots, Carely AI uses **Retrieval-Augmented Generation (RAG)** to "read" your internal business documents—FAQs, pricing sheets, policies, and operating hours—to generate accurate, brand-aligned responses.
-
-But it goes beyond just answering questions. Carely AI listens. Its **Business Analytics Agent** analyzes conversation logs to categorize topics, detect gaps in knowledge, and identify high-priority customer concerns, allowing businesses to make data-driven decisions.
-
-### Core Philosophy
-* **Automate:** Reduce response times with a context-aware AI support agent.
-* **Analyze:** Uncover hidden patterns in customer conversations.
-* **Improve:** Receive data-driven recommendations to refine your knowledge base.
+By leveraging Retrieval-Augmented Generation (RAG) and high-speed LLM classification, Carely not only answers customer queries based on uploaded company documents but also continuously analyzes conversation logs to visually report on sentiments, categorize inquiries, and autonomously identify gaps in a business's knowledge base.
 
 ---
 
 ## ✨ Key Features
 
-### 🤖 Customer Support Agent (RAG-Powered)
-* **Context-Aware Responses:** Indexes uploaded business documents (PDFs, text files) to provide factual answers using Google Gemini.
-* **Brand Alignment:** Ensures responses are consistent with your company's tone and policies.
-* **24/7 Availability:** Handles inquiries instantly, reducing human workload.
+### 1. Customer Support Agent (RAG)
+- **Context-Aware Responses:** Automatically answers customer inquiries (via WhatsApp integration) using semantic search against uploaded business PDFs.
+- **Smart Fallbacks:** If a customer asks a question outside the scope of the uploaded documents, the agent gracefully handles it and tags the conversation for review.
+- **Persistent Memory:** Maintains conversation history for context-aware, multi-turn interactions.
 
-### 📊 Business Analytics Agent
-* **Topic Modeling:** Automatically categorizes customer messages into meaningful business topics (e.g., "Pricing," "Technical Issues," "Availability").
-* **Gap Analysis:** Detects questions where the AI had low confidence or lacked information, highlighting areas where your documentation needs improvement.
-* **Insight Dashboard:** Visualizes frequently asked questions and emerging trends.
+### 2. Business Analytics Agent & Dashboard
+- **Real-Time KPI Tracking:** Tracks total conversations, message volume, overall customer sentiment, and top interaction categories.
+- **Dynamic Data Visualization:** Utilizes Chart.js for real-time line charts, doughnut charts, and bar charts.
+- **Category Management:** Tracks specific types of inquiries (e.g., *Pricing Inquiries, Technical Support, Complaints*).
 
-### 🔄 Continuous Learning Loop
-* **Smart Recommendations:** Suggests specific content updates based on "failed" or low-confidence interactions.
-* **Dynamic Knowledge Base:** Easily update your documents to instantly improve the AI's future performance.
+### 3. AI-Driven Knowledge Gap Discovery
+- **Insight Generation:** Scans recent "Uncategorized" customer chats and cross-references them against the existing PDF knowledge base to identify missing information.
+- **Actionable Recommendations:** Automatically suggests new tracking categories and specific FAQ documents the business should create to improve the RAG agent's accuracy.
+- **Background Re-categorization:** When a new category is approved, a background thread seamlessly scans historical unmapped messages and re-categorizes them without freezing the UI.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Architecture
 
-* **LLM:** Google Gemini (via Google AI Studio)
-* **Backend:** Python (Flask)
-* **Vector Database:** ChromaDB (for document indexing and retrieval)
-* **Primary Database:** MongoDB (for storing conversation logs and analytics)
-* **Frontend:** HTML/CSS/JavaScript
+### Backend & Core Logic
+- **Framework:** Python / Flask
+- **LLM Provider:** [Groq](https://groq.com/) (Ultra-fast inference)
+- **Models Used:**
+  - `llama-3.3-70b-versatile`: Utilized by the Customer Support Agent for deep reasoning and accurate RAG formulation.
+  - `llama-3.1-8b-instant`: Utilized by the Business Analytics Agent for lightning-fast JSON classification, sentiment scoring, and gap analysis across large context windows.
+- **Vector Store:** ChromaDB for local embedding storage and retrieval.
+- **Document Processing:** `pypdf` for text extraction.
+
+### Database (MongoDB)
+- **Company_Documents:** Stores metadata and paths to uploaded PDFs.
+- **Company_Conversation_Categories:** Stores active tracking categories defined by the business or suggested by AI.
+- **Customer_Live_Conversations:** Stores chronological arrays of chat messages per customer, tracking roles, content, timestamps, status, categories, and sentiment scores.
+
+### Frontend
+- **UI/UX:** HTML5, CSS3, JavaScript
+- **Libraries:** Chart.js
 
 ---
 
 ## 📂 Project Structure
 
-```bash
+```text
 Carely/
-├── business_facing_agent/   # Logic for analytics and insights generation
-├── customer_facing_agent/   # Logic for RAG and handling customer queries
-├── chroma_db/               # Local vector storage for business documents
-├── mongodb_database/        # Database connection and models
-├── static/                  # CSS, Images, and JavaScript files
-├── templates/               # HTML templates for the web interface
-├── uploads/                 # Storage for uploaded business documents
-├── app.py                   # Main Flask application entry point
-└── .env                     # API keys and configuration secrets
+├── app/
+│   ├── routes/
+│   │   ├── auth_routes.py                 # Authentication and session handling
+│   │   ├── business_agent_routes.py       # Analytics dashboard and gap analysis endpoints
+│   │   ├── main_routes.py                 # Core navigation and landing pages
+│   │   ├── rag_agent_routes.py            # Customer support RAG interface
+│   │   └── whatsapp_integration_routes.py # Webhooks for WhatsApp messaging
+│   ├── static/                            # CSS, images, and frontend assets
+│   ├── templates/                         # HTML templates (Dashboards, Modals)
+│   ├── config.py                          # Application configuration variables
+│   ├── services.py                        # Shared business logic
+│   └── utils.py                           # Helper functions and decorators (e.g., @login_required)
+├── business_facing_agent/
+│   └── Business_Agent.py                  # Gap analysis, PDF extraction, and recategorizer logic
+├── chroma_db_<company_id>/                # Local vector store directories per company
+├── customer_facing_agent/
+│   ├── Customer_Agent.py                  # Orchestrator for RAG answering and fast classification
+│   ├── document_processor.py             # PDF chunking and embedding generation
+│   ├── history_manager.py                # Chat history context window management
+│   ├── retrieval_engine.py               # LLM Chain execution and prompt formatting
+│   └── vector_store.py                   # ChromaDB manager
+├── mongodb_database/
+│   ├── company_documents_db/             # Modular DB operations
+│   ├── company_embeddings_db/
+│   ├── company_info_db/
+│   ├── company_whatsapp_config_db/
+│   ├── conversation_categories_db/
+│   ├── customer_live_conversations_db/
+│   ├── internal_test_conversations_db/
+│   └── connection.py                     # PyMongo client initialization
+├── uploads/                              # Secure storage for uploaded company PDFs
+├── .env                                  # Environment variables (API keys, URIs)
+└── run.py                                # Application entry point
+```
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- Python 3.9+
+- MongoDB URI (Local or Atlas)
+- Groq API Key
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/James-Muthama/Carely-AI.git
+cd Carely-AI
+```
+
+### 2. Set Up Virtual Environment
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Environment Variables
+Create a `.env` file in the root directory and add your credentials:
+
+```env
+FLASK_APP=run.py
+FLASK_ENV=development
+SECRET_KEY=your_secure_flask_secret_key
+MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/Carely
+GROQ_API_KEY=gsk_your_groq_api_key_here
+```
+
+### 5. Run the Application
+```bash
+flask run --port=5000
+```
+
+Navigate to `http://127.0.0.1:5000` in your browser.
+
+---
+
+## 💡 Usage Workflow
+
+1. **Upload Knowledge:** The business uploads their operating procedures, pricing, and FAQ PDFs. The system chunks and embeds these documents into ChromaDB.
+2. **Setup Categories:** The AI reads the PDFs and suggests initial categories. The business activates them to start tracking.
+3. **Handle Chats:** As customers send messages, the Customer Support Agent answers via RAG. Concurrently, the Fast LLM tags the message with a Category and Sentiment Score (-1.0 to 1.0).
+4. **Monitor:** The business reviews the Analytics Dashboard to see volume trends and overall satisfaction.
+5. **Improve:** The business visits Agent Insights. The AI reviews messages tagged as "Uncategorized" and suggests new documents to write to fill the knowledge gaps, creating a continuous improvement loop.
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/James-Muthama/Carely-AI/issues).
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
