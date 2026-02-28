@@ -5,8 +5,6 @@ from flask import Blueprint, render_template, request, jsonify, session, current
 from Carely.app.utils import login_required
 from Carely.mongodb_database.connection import client
 
-# --- IMPORT THE AGENT CLASS ---
-# Ensure your BusinessAnalyticsAgent class is saved in Carely/business_facing_agent/Business_Agent.py
 from Carely.business_facing_agent.Business_Agent import BusinessAnalyticsAgent
 
 # Create the Blueprint
@@ -17,10 +15,6 @@ documents_collection = client.Carely.Company_Documents
 categories_collection = client.Carely.Company_Conversation_Categories
 analytics_collection = client.Carely.Business_Analytics
 
-
-# ==========================================
-# FLASK ROUTES
-# ==========================================
 
 @business_bp.route('/business_agent', methods=['GET'])
 @login_required
@@ -117,9 +111,9 @@ def category_setup():
     # 3. If no categories exist, run the Agent to get suggestions
     if not existing_categories:
         try:
-            # Initialize the Agent
+            # Initialize the Agent using GROQ_API_KEY
             agent = BusinessAnalyticsAgent(
-                google_api_key=os.environ.get('GOOGLE_API_KEY'),
+                groq_api_key=os.environ.get('GROQ_API_KEY'),
                 mongodb_client=client,
                 company_id=str(company_id)
             )
@@ -139,6 +133,7 @@ def category_setup():
         existing_categories=existing_categories,
         suggestions=suggestions
     )
+
 
 @business_bp.route('/business_agent/manage_categories')
 @login_required

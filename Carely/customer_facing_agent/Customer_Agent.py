@@ -4,11 +4,12 @@ from typing import Optional, Dict, List, Any
 from datetime import datetime, timezone
 from bson import ObjectId
 
-# Import your new modular components
+# Import your modular components
 from .document_processor import DocumentProcessor
 from .vector_store import VectorStoreManager
 from .history_manager import HistoryManager
 from .retrieval_engine import RetrievalEngine
+
 
 class CustomerSupportAgent:
     """
@@ -31,13 +32,23 @@ class CustomerSupportAgent:
         self.session_info = session_info or {}
         self.db = mongodb_client.Carely
         self.documents_collection = self.db.Company_Documents
-        self.embeddings_collection = self.db.Company_Embeddings # Added for deletion logic
+        self.embeddings_collection = self.db.Company_Embeddings
+
+        # --- MODEL CONFIGURATION ---
+        # Using the flagship 70B model for high-reasoning customer support
+        self.model_name = "llama-3.3-70b-versatile"
 
         # --- Initialize Sub-Modules ---
         self.doc_processor = DocumentProcessor()
         self.vector_manager = VectorStoreManager(self.company_id, self.db)
         self.history_manager = HistoryManager(self.company_id, self.db)
-        self.retrieval_engine = RetrievalEngine(None, groq_api_key)  # Vector store set later
+
+        # UPDATED: Pass the 70B model name to the RetrievalEngine
+        self.retrieval_engine = RetrievalEngine(
+            vector_store=None,
+            groq_api_key=groq_api_key,
+            model_name=self.model_name
+        )
 
         # --- Load Existing Data ---
         self.history_manager.load_history()
@@ -52,6 +63,7 @@ class CustomerSupportAgent:
         """Helper to format history for the LLM prompt."""
         if not self.history_manager.history:
             return "No previous conversation"
+        # 70B handles context very well, so we can pass the last 3 exchanges
         return "\n".join([f"Q: {q}\nA: {a}" for q, a in self.history_manager.history[-3:]])
 
     def upload_file(self, pdf_path: str) -> bool:
@@ -94,6 +106,7 @@ class CustomerSupportAgent:
         """Main query method."""
         try:
             start = time.time()
+            # The retrieval_engine now uses llama-3.3-70b-versatile
             response = self.retrieval_engine.query(question)
             end = time.time()
 
@@ -104,13 +117,8 @@ class CustomerSupportAgent:
         except Exception as e:
             return f"Error: {str(e)}"
 
-    # --- RESTORED HELPER METHODS BELOW ---
-
     def get_company_documents(self) -> List[Dict]:
-        """
-        [RESTORED] Get list of processed documents for this company.
-        Used by: /chat_interface, /upload, /company_documents
-        """
+        """Get list of processed documents for this company."""
         try:
             docs = list(self.documents_collection.find({"company_id": self.company_id}))
             return [
@@ -118,7 +126,6 @@ class CustomerSupportAgent:
                     "file_name": doc.get("file_name", "Unknown"),
                     "uploaded_at": doc.get("uploaded_at"),
                     "status": doc.get("processing_status", "unknown"),
-                    # Add generic placeholders if modules don't track page counts yet
                     "total_pages": doc.get("total_pages", "?"),
                     "total_chunks": doc.get("total_chunks", "?")
                 }
@@ -129,15 +136,11 @@ class CustomerSupportAgent:
             return []
 
     def get_relevant_documents(self, question: str, k: int = 3) -> List[dict]:
-        """
-        [RESTORED] Get relevant docs for transparency.
-        Used by: /ask_question
-        """
+        """Get relevant docs for transparency."""
         if not self.retrieval_engine.compression_retriever:
             return []
 
         try:
-            # Access the retriever from the retrieval engine module
             docs = self.retrieval_engine.compression_retriever.invoke(question)
             return [
                 {
@@ -152,14 +155,8 @@ class CustomerSupportAgent:
             return []
 
     def delete_document(self, file_name: str) -> Dict[str, Any]:
-        """
-        [RESTORED] Delete a specific document.
-        Used by: /delete_document
-        """
+        """Delete a specific document."""
         try:
-            print(f"Attempting to delete document: {file_name}")
-
-            # 1. Find document
             doc = self.documents_collection.find_one({
                 "company_id": self.company_id,
                 "file_name": file_name
@@ -170,16 +167,12 @@ class CustomerSupportAgent:
             doc_id = doc.get("_id")
             file_path = doc.get("file_path")
 
-            # 2. Delete from MongoDB Collections
             self.documents_collection.delete_one({"_id": doc_id})
             self.embeddings_collection.delete_many({"company_id": self.company_id, "document_id": str(doc_id)})
 
-            # 3. Rebuild Vector Store (Cleanest way to remove from Chroma)
-            # We delete the folder and allow the next reload/upload to rebuild it or handle it empty
             self.vector_manager.delete_store()
-            self.retrieval_engine.rag_chain = None # Reset chain
+            self.retrieval_engine.rag_chain = None
 
-            # 4. Remove physical file
             if file_path and os.path.exists(file_path):
                 try:
                     os.remove(file_path)
@@ -188,31 +181,26 @@ class CustomerSupportAgent:
 
             return {
                 "success": True,
-                "message": "Document deleted. Please upload a new document to chat.",
-                "deleted_items": {}
+                "message": "Document deleted. Please upload a new document to chat."
             }
-
         except Exception as e:
             return {"success": False, "error": str(e)}
 
     def health_check(self) -> dict:
-        """
-        [RESTORED] System health check.
-        Used by: /rag_status
-        """
+        """System health check."""
         return {
             "company_id": str(self.company_id),
-            "vector_store": self.vector_manager.vector_store is not None,
-            "rag_chain": self.retrieval_engine.rag_chain is not None,
-            "conversation_count": len(self.history_manager.history),
-            "has_documents": self.documents_collection.count_documents({"company_id": self.company_id}) > 0
+            "model_in_use": self.model_name,
+            "vector_store_active": self.vector_manager.vector_store is not None,
+            "rag_chain_active": self.retrieval_engine.rag_chain is not None,
+            "history_depth": len(self.history_manager.history)
         }
 
     def clear_conversation_history(self):
         self.history_manager.clear()
 
     def delete_company_data(self):
-        """Cleanup method."""
+        """Full cleanup."""
         self.documents_collection.delete_many({"company_id": self.company_id})
         self.db.Internal_Test_Conversations.delete_many({"company_id": self.company_id})
         self.db.Company_Embeddings.delete_many({"company_id": self.company_id})

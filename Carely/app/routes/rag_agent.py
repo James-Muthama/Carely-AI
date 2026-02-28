@@ -18,7 +18,7 @@ def customer_agent():
 def upload_file():
     """
     Handle PDF file upload and process it through the persistent RAG system.
-    UPDATED: Keeps the file on disk so the Business Agent can analyze it later.
+    Keeps the file on disk so the Business Agent can analyze it later.
     """
     if request.method == 'POST':
         try:
@@ -58,8 +58,7 @@ def upload_file():
 
             print(f"Processing PDF: {filepath}")
 
-            # Process with RAG
-            # Note: We keep the file path in the DB so Business Agent can find it
+            # Process with RAG (using the new 70B model internally)
             success = rag_system.upload_file(filepath)
 
             if success:
@@ -67,12 +66,6 @@ def upload_file():
                 session['uploaded_filename'] = filename
 
                 flash(f'Document {filename} processed successfully!', 'success')
-
-                # --- CHANGE IS HERE ---
-                # We REMOVED the os.remove(filepath) code.
-                # The file now stays in the 'uploads' folder.
-                # ----------------------
-
                 return redirect(url_for('rag.chat_interface'))
 
             else:
@@ -138,7 +131,7 @@ def ask_question():
                 'status': 'invalid_request'
             }), 400
 
-        # Get answer from persistent RAG system
+        # Get answer from persistent RAG system (Powered by Llama 3.3 70B)
         answer = rag_system.ask_question(question)
 
         # Optionally get relevant documents for transparency
@@ -248,6 +241,8 @@ def rag_status():
         'uploaded_file': session.get('uploaded_filename', None),
         'system_available': rag_system is not None,
         'llm_provider': 'groq',
+        # dynamically pulls the new 70B model name from the agent class
+        'active_model': health_status.get('model_in_use', 'Unknown'),
         'health': health_status
     })
 
@@ -323,7 +318,9 @@ def delete_document():
             return jsonify({
                 'status': 'success',
                 'message': result['message'],
-                'deleted_items': result['deleted_items'],
+                # FIX: Safely retrieve deleted_items to prevent KeyError
+                # (since the new agent class stopped returning it)
+                'deleted_items': result.get('deleted_items', {'embedding_records': 'all associated', 'document_records': 1}),
                 'remaining_documents': len(remaining_docs),
                 'rag_system_ready': len(remaining_docs) > 0
             })
@@ -375,7 +372,8 @@ def delete_document_confirm(file_name):
             return jsonify({
                 'status': 'success',
                 'message': result['message'],
-                'deleted_items': result['deleted_items'],
+                # FIX: Safely retrieve deleted_items here as well
+                'deleted_items': result.get('deleted_items', {'embedding_records': 'all associated', 'document_records': 1}),
                 'remaining_documents': len(remaining_docs)
             })
         else:

@@ -7,9 +7,13 @@
         </a>
 
         <div class="header-nav">
-            <a href="{{ url_for('rag.upload_file') }}" class="header-btn">Upload Business PDF Files</a>
-            <a href="{{ url_for('rag.chat_interface') }}" class="header-btn">Carely AI Customer Support Agent</a>
-            <a href="{{ url_for('main.whatsapp_integration') }}" class="header-btn active-header-btn">WhatsApp Integration</a>
+            <a href="{{ url_for('rag.upload_file') }}" class="header-btn">📚 Upload Business PDF Files</a>
+            <a href="{{ url_for('rag.chat_interface') }}" class="header-btn">🤖 Carely AI Customer Support Agent</a>
+
+            <a href="{{ url_for('whatsapp_integration.whatsapp_integration_page') }}" class="header-btn active-header-btn" style="display: flex; align-items: center; gap: 8px;">
+                <img src="{{ url_for('static', filename='images/Whatsapp_logo.webp') }}" alt="WhatsApp Logo" style="width: 28px; height: 28px; object-fit: contain;">
+                WhatsApp Integration
+            </a>
         </div>
     </header>
 
