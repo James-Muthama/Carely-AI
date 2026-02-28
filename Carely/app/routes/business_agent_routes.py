@@ -4,6 +4,7 @@ from bson.objectid import ObjectId
 from flask import Blueprint, render_template, request, jsonify, session, current_app, redirect, url_for
 from Carely.app.utils import login_required
 from Carely.mongodb_database.connection import client
+import threading
 
 from Carely.business_facing_agent.Business_Agent import BusinessAnalyticsAgent
 
@@ -15,6 +16,22 @@ documents_collection = client.Carely.Company_Documents
 categories_collection = client.Carely.Company_Conversation_Categories
 analytics_collection = client.Carely.Business_Analytics
 live_conversations_collection = client.Carely.Customer_Live_Conversations
+
+def background_recategorize(app_context, company_id_str):
+    """
+    Background worker to recategorize old messages without freezing the web UI.
+    Requires app_context if the agent uses Flask features.
+    """
+    with app_context:
+        try:
+            agent = BusinessAnalyticsAgent(
+                groq_api_key=os.environ.get('GROQ_API_KEY'),
+                mongodb_client=client,
+                company_id=company_id_str
+            )
+            agent.recategorize_unmapped_messages()
+        except Exception as e:
+            print(f"Background thread error: {e}")
 
 
 @business_bp.route('/business_agent', methods=['GET'])
@@ -29,7 +46,7 @@ def business_agent():
 def manage_categories_api():
     """
     API Endpoint called by the 'Save & Activate' button in the HTML.
-    Handles JSON data to save categories to MongoDB.
+    Handles JSON data to save categories to MongoDB and triggers background re-categorization.
     """
     user_id = session.get('user_id')
     if not user_id:
@@ -47,12 +64,10 @@ def manage_categories_api():
 
     # POST: Save new categories
     if request.method == 'POST':
-        # The HTML JavaScript sends strictly JSON
         if request.is_json:
             data = request.get_json()
             categories = data.get('categories')
         else:
-            # Fallback for safety
             data = request.get_json(force=True, silent=True)
             categories = data.get('categories') if data else []
 
@@ -74,7 +89,13 @@ def manage_categories_api():
                 },
                 upsert=True
             )
-            return jsonify({'status': 'success', 'message': 'Categories saved successfully'})
+
+            # --- NEW: Trigger Background Recategorization ---
+            app_context = current_app.app_context()
+            company_id_str = str(user_id)
+            threading.Thread(target=background_recategorize, args=(app_context, company_id_str)).start()
+
+            return jsonify({'status': 'success', 'message': 'Categories saved. Old messages are being updated in the background.'})
 
         except Exception as e:
             print(f"Database Error: {e}")
@@ -311,3 +332,48 @@ def dashboard_stats():
         import traceback
         traceback.print_exc()
         return jsonify({'status': 'error', 'error': str(e)}), 500
+
+
+@business_bp.route('/business_agent/improvements', methods=['GET'])
+@login_required
+def improvements():
+    """Renders the Generate Improvement Documents interface."""
+    return render_template('business_improvements.html')
+
+
+@business_bp.route('/business_agent/api/generate_improvements', methods=['GET'])
+@login_required
+def api_generate_improvements():
+    """API endpoint that triggers the LLM to analyze unmapped chats."""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        agent = BusinessAnalyticsAgent(
+            groq_api_key=os.environ.get('GROQ_API_KEY'),
+            mongodb_client=client,
+            company_id=str(user_id)
+        )
+
+        suggestions = agent.generate_improvement_suggestions()
+
+        # --- BULLETPROOF FALLBACK CHECKS ---
+        if not suggestions or not isinstance(suggestions, dict):
+            suggestions = {
+                "new_categories": [],
+                "suggested_documents": [{"title": "No Clear Insights",
+                                         "description": "The AI could not generate suggestions at this time."}]
+            }
+
+        if "suggested_documents" not in suggestions or suggestions["suggested_documents"] is None:
+            suggestions["suggested_documents"] = []
+
+        if "new_categories" not in suggestions or suggestions["new_categories"] is None:
+            suggestions["new_categories"] = []
+
+        return jsonify({"status": "success", "data": suggestions})
+
+    except Exception as e:
+        print(f"API Route Error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500

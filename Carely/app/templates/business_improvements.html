@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 15px 50px; width: 100%; box-sizing: border-box; background-color: #1e293b;">
+        <a href="{{ url_for('main.homepage') }}" style="text-decoration: none;">
+            <h1 style="margin: 0; color: white; white-space: nowrap;">Carely AI</h1>
+        </a>
+
+        <div class="header-nav">
+            <a href="{{ url_for('business_agent.category_setup') }}" class="header-btn">🏷️ Business Analytics Categories</a>
+            <a href="{{ url_for('business_agent.analytics_dashboard') }}" class="header-btn">📊 Analytics Dashboard</a>
+            <a href="{{ url_for('business_agent.improvements') }}" class="header-btn active-header-btn">🚀 Generate Improvement Documents</a>
+        </div>
+    </header>
+
+    <div id="left_column">
+        <a href="{{ url_for('main.profile') }}" id="profile_link">
+            <div id="profile">
+                <div id="profile_info">
+                    <div id="profile_photo_container">
+                        <img src="{{ url_for('main.profile_image') }}" alt="Profile Photo" id="profile_photo">
+                    </div>
+                    <div id="company_name">{{ session['user'] }}</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('rag.customer_agent') }}" id="upload_link">Customer Support <br> Agent</a>
+        <a href="{{ url_for('business_agent.business_agent') }}" id="dashboard_link">Business Analytics <br> Agent</a>
+
+        <div id="logout_image_container">
+            <div id="logout_image_cont">
+                <img src="{{ url_for('static', filename='images/logout_img.png') }}" alt="Logout Image" id="logout_image">
+            </div>
+            <a href="{{ url_for('main.logout') }}" id="logout_link">Logout</a>
+        </div>
+    </div>
+
+    <div id="content">
+        <div id="welcome_msg">
+            <p id="welcome">Agent Insights & Improvements</p>
+        </div>
+
+        <div class="content-box" style="background: linear-gradient(135deg, #4682B4 0%, #1e293b 100%); color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1; min-width: 300px;">
+                <h2 style="color: white; margin-top: 0;">🚀 Discover Knowledge Gaps</h2>
+                <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.5;">
+                    The Business Analytics Agent is scanning recent "Uncategorized" customer chats to identify topics your AI struggles to answer, generating targeted recommendations for new documents to upload.
+                </p>
+            </div>
+        </div>
+
+        <div id="loading-state" style="display: none; text-align: center; padding: 40px; color: #64748b;">
+            <h3>🤖 AI is analyzing recent conversations...</h3>
+            <p>This takes just a few seconds.</p>
+        </div>
+
+        <div id="results-area" style="display: none; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+
+            <div class="content-box" style="flex: 1.5; min-width: 350px;">
+                <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                    📄 Recommended FAQ Documents
+                </h3>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">
+                    Create and upload these documents to the Customer Support Agent to instantly improve its accuracy.
+                </p>
+                <div id="doc-suggestions-container" style="display: flex; flex-direction: column; gap: 15px;">
+                </div>
+            </div>
+
+            <div class="content-box" style="flex: 1; min-width: 300px;">
+                <h3 style="color: #1e293b; margin-top: 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                    🏷️ Suggested Categories
+                </h3>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">
+                    Consider adding these to your Analytics configuration.
+                </p>
+                <div id="cat-suggestions-container" style="display: flex; flex-direction: column; gap: 12px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="category-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+        <div style="background: white; padding: 25px; border-radius: 12px; width: 450px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 20px;">➕ Add New Category</h3>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 15px;">Would you like to add this AI-suggested category to your active tracking list?</p>
+
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+                <strong id="modal-cat-name" style="color: #1e293b; display: block; font-size: 16px; margin-bottom: 5px;"></strong>
+                <span id="modal-cat-desc" style="color: #475569; font-size: 13px; line-height: 1.4; display: block;"></span>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button onclick="closeCategoryModal()" style="background: #e2e8f0; color: #475569; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;">
+                    Cancel
+                </button>
+                <button id="confirm-add-btn" onclick="confirmAddCategory()" style="background: linear-gradient(135deg, #32CD32 0%, #228B22 100%); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(34, 139, 34, 0.2); transition: transform 0.2s;">
+                    Add to Categories
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .header-nav { display: flex; flex: 1; justify-content: flex-start; padding-left: 60px; gap: 40px; align-items: center; }
+        .header-btn { padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 15px; font-weight: 600; color: #cbd5e1; background-color: transparent; transition: all 0.3s ease; text-align: center; }
+        .active-header-btn { background-color: #ffffff !important; color: #1e293b !important; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+        .header-btn:hover { background-color: #ffffff !important; color: #1e293b !important; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+        .header-nav:hover .active-header-btn:not(:hover) { background-color: transparent !important; color: #cbd5e1 !important; box-shadow: none !important; transform: none !important; }
+
+        .add-cat-btn {
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+            transition: transform 0.2s, background 0.2s;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+        .add-cat-btn:hover { background: #16a34a; transform: scale(1.05); }
+        .add-cat-btn:active { transform: scale(0.95); }
+
+        #confirm-add-btn:active { transform: scale(0.95); }
+
+        @media (max-width: 1024px) {
+            .header-nav { gap: 20px; padding-left: 30px; }
+            .header-btn { font-size: 13px; padding: 8px 12px; }
+        }
+        @media (max-width: 768px) {
+            .header-nav { display: none; }
+        }
+    </style>
+
+    <script>
+        // Global variable to hold the category being added
+        let pendingCategory = null;
+
+        // Trigger the analysis automatically when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            runAnalysis();
+        });
+
+        function runAnalysis() {
+            const loading = document.getElementById('loading-state');
+            const results = document.getElementById('results-area');
+
+            results.style.display = 'none';
+            loading.style.display = 'block';
+
+            fetch("{{ url_for('business_agent.api_generate_improvements') }}")
+                .then(async res => {
+                    const contentType = res.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        return res.json();
+                    } else {
+                        const text = await res.text();
+                        console.error("HTML Error Response:", text);
+                        throw new Error("Server crashed or returned HTML. Check your Python terminal!");
+                    }
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        renderSuggestions(data.data);
+                        loading.style.display = 'none';
+                        results.style.display = 'flex';
+                    } else {
+                        alert("Error generating suggestions: " + data.message);
+                        loading.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error("Detailed Fetch Error:", err);
+                    alert("Analysis Failed: " + err.message);
+                    loading.style.display = 'none';
+                });
+        }
+
+        function renderSuggestions(data) {
+            // 1. Crash-proof defensive checks
+            if (!data) {
+                data = {};
+            }
+
+            // Safely default to empty arrays if they are undefined or null
+            const suggestedDocs = data.suggested_documents || [];
+            const newCategories = data.new_categories || [];
+
+            const docContainer = document.getElementById('doc-suggestions-container');
+            const catContainer = document.getElementById('cat-suggestions-container');
+
+            docContainer.innerHTML = '';
+            catContainer.innerHTML = '';
+
+            // 2. Render Documents
+            if (suggestedDocs.length > 0) {
+                suggestedDocs.forEach(doc => {
+                    docContainer.innerHTML += `
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 15px;">
+                            <strong style="color: #1e293b; display: block; margin-bottom: 5px; font-size: 15px;">📝 ${doc.title}</strong>
+                            <span style="color: #475569; font-size: 14px; line-height: 1.5;">${doc.description}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                docContainer.innerHTML = '<p style="color: #64748b;">No new documents suggested at this time. Your Knowledge Base looks solid!</p>';
+            }
+
+            // 3. Render Categories with the new "+" button
+            if (newCategories.length > 0) {
+                newCategories.forEach(cat => {
+                    const safeName = (cat.name || "Unknown").replace(/"/g, '&quot;');
+                    const safeDesc = (cat.description || "").replace(/"/g, '&quot;');
+
+                    catContainer.innerHTML += `
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: #166534; display: block; margin-bottom: 3px;">🏷️ ${cat.name}</strong>
+                                <span style="color: #15803d; font-size: 13px;">${cat.description}</span>
+                            </div>
+                            <button class="add-cat-btn" title="Add to Active Categories"
+                                data-name="${safeName}" data-desc="${safeDesc}"
+                                onclick="openCategoryModal(this)">+</button>
+                        </div>
+                    `;
+                });
+            } else {
+                catContainer.innerHTML = '<p style="color: #64748b;">No new categories suggested at this time. Your routing is up to date!</p>';
+            }
+        }
+
+        // --- MODAL & API LOGIC ---
+
+        function openCategoryModal(btnElement) {
+            const name = btnElement.getAttribute('data-name');
+            const desc = btnElement.getAttribute('data-desc');
+
+            pendingCategory = { name: name, description: desc };
+
+            document.getElementById('modal-cat-name').innerText = "🏷️ " + name;
+            document.getElementById('modal-cat-desc').innerText = desc;
+
+            document.getElementById('category-modal').style.display = 'flex';
+        }
+
+        function closeCategoryModal() {
+            pendingCategory = null;
+            document.getElementById('category-modal').style.display = 'none';
+        }
+
+        async function confirmAddCategory() {
+            if (!pendingCategory) return;
+
+            const btn = document.getElementById('confirm-add-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ Adding...";
+            btn.disabled = true;
+
+            try {
+                // 1. Fetch current categories so we don't overwrite them
+                const getRes = await fetch("{{ url_for('business_agent.manage_categories_api') }}");
+                const getData = await getRes.json();
+
+                let currentCategories = [];
+                if (getData.status === 'success' && getData.categories) {
+                    currentCategories = getData.categories;
+                }
+
+                // 2. Prevent exact duplicates
+                const exists = currentCategories.some(cat => cat.name.toLowerCase() === pendingCategory.name.toLowerCase());
+                if (exists) {
+                    alert("This category already exists in your tracking list!");
+                    closeCategoryModal();
+                    return;
+                }
+
+                // 3. Append the new category
+                currentCategories.push(pendingCategory);
+
+                // 4. Post the updated list back to the API
+                const postRes = await fetch("{{ url_for('business_agent.manage_categories_api') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categories: currentCategories })
+                });
+                const postData = await postRes.json();
+
+                if (postData.status === 'success') {
+                    // Provide a nice success alert
+                    alert("✅ Successfully added '" + pendingCategory.name + "' to your tracked categories!");
+                    closeCategoryModal();
+                } else {
+                    alert("❌ Error: " + postData.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred while adding the category.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+{% endblock %}

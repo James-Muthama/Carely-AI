@@ -20,11 +20,11 @@ def create_app():
 
     # 4. Import Blueprints
     # Imports are done here to avoid circular import errors
-    from Carely.app.routes.auth import auth_bp
-    from Carely.app.routes.main import main_bp
-    from Carely.app.routes.rag_agent import rag_bp
-    from Carely.app.routes.business_agent import business_bp
-    from Carely.app.routes.whatsapp_integration import whatsapp_bp
+    from Carely.app.routes.auth_routes import auth_bp
+    from Carely.app.routes.main_routes import main_bp
+    from Carely.app.routes.rag_agent_routes import rag_bp
+    from Carely.app.routes.business_agent_routes import business_bp
+    from Carely.app.routes.whatsapp_integration_routes import whatsapp_bp
 
     # 5. Register Blueprints
     app.register_blueprint(auth_bp)

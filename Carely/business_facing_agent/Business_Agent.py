@@ -12,7 +12,7 @@ class BusinessAnalyticsAgent:
     """
     Business Analytics Agent using Groq.
     - Uses 'llama-3.1-8b-instant' for blazing fast inference and massive context.
-    - Aggregates text from ALL uploaded company documents.
+    - Aggregates text from ALL uploaded company documents and cross-references them with live chats.
     """
 
     def __init__(self, groq_api_key: str, mongodb_client, company_id: str):
@@ -26,9 +26,10 @@ class BusinessAnalyticsAgent:
 
         self.db = mongodb_client.Carely
         self.documents_collection = self.db.Company_Documents
+        self.live_conversations_collection = self.db.Customer_Live_Conversations
+        self.categories_collection = self.db.Company_Conversation_Categories  # NEW
         self.client = Groq(api_key=self.groq_api_key)
 
-        # --- UPDATED MODEL ---
         # The new 8B model with a 128k context window
         self.model_name = "llama-3.1-8b-instant"
 
@@ -61,10 +62,6 @@ class BusinessAnalyticsAgent:
         return valid_paths
 
     def _extract_text_from_pdf(self, file_path: str, max_pages: int = 15) -> str:
-        """
-        Extracts text from a single PDF.
-        Increased max_pages to 15 since we now have a 128k context window.
-        """
         try:
             reader = pypdf.PdfReader(file_path)
             text_content = []
@@ -94,12 +91,8 @@ class BusinessAnalyticsAgent:
                 full_context += file_text
                 full_context += "\n--- DOCUMENT END ---\n"
 
-        # Expanded Safety Truncate: Now allows ~100,000 characters (approx 25k tokens)
-        # safely well within the 128k limit of Llama 3.1
         if len(full_context) > 100000:
             full_context = full_context[:100000] + "... [TRUNCATED]"
-
-        print(f"Analyzing {len(full_context)} chars from {len(file_paths)} docs with {self.model_name}...")
 
         try:
             prompt = f"""
@@ -139,6 +132,184 @@ class BusinessAnalyticsAgent:
             print(f"DEBUG: Groq Error: {str(e)}")
             return [
                 {'name': 'General Inquiry', 'description': 'General questions about the business'},
-                {'name': 'Support', 'description': 'Technical support requests'},
-                {'name': 'Sales', 'description': 'Product inquiries and sales'}
+                {'name': 'Support', 'description': 'Technical support requests'}
             ]
+
+    def generate_improvement_suggestions(self) -> dict:
+        """
+        Cross-references uploaded documents against unmapped chats to find knowledge gaps.
+        """
+        try:
+            # 1. Fetch up to 50 recent Uncategorized messages
+            pipeline = [
+                {"$match": {"company_id": self.company_id}},
+                {"$unwind": "$messages"},
+                {"$match": {
+                    "messages.role": "user",
+                    "messages.category": {"$in": ["Uncategorized", None, ""]}
+                }},
+                {"$project": {"content": "$messages.content"}},
+                {"$limit": 50}
+            ]
+
+            results = list(self.live_conversations_collection.aggregate(pipeline))
+
+            if not results:
+                return {
+                    "new_categories": [{"name": "All Caught Up", "description": "Your agent is currently categorizing all interactions successfully."}],
+                    "suggested_documents": [{"title": "Knowledge Base is Solid", "description": "No new unmapped questions detected in recent chats."}]
+                }
+
+            messages_text = "\n- ".join([r['content'] for r in results])
+
+            # 2. Fetch the current business documents
+            file_paths = self._get_all_document_paths()
+            full_context = ""
+            for path in file_paths:
+                file_text = self._extract_text_from_pdf(path)
+                if file_text:
+                    full_context += f"\n--- DOCUMENT START: {os.path.basename(path)} ---\n"
+                    full_context += file_text
+                    full_context += "\n--- DOCUMENT END ---\n"
+
+            if len(full_context) > 80000:
+                full_context = full_context[:80000] + "... [TRUNCATED]"
+            elif not full_context:
+                full_context = "No business documents currently uploaded."
+
+            # 3. Prompt the AI with strict instructions
+            prompt = f"""
+            You are a Business Intelligence Analyst. Your task is to identify knowledge gaps in an AI Customer Support Agent.
+
+            STEP 1: Review the current Business Knowledge Base:
+            {full_context}
+
+            STEP 2: Review these recent customer messages that our AI failed to categorize:
+            {messages_text}
+
+            STEP 3: Compare them. What are customers asking about in the messages that is completely MISSING or insufficiently covered in the Business Knowledge Base?
+
+            Respond EXACTLY in this JSON format. If you cannot find any suggestions, return empty arrays ([]), NEVER return null:
+            {{
+                "new_categories": [
+                    {{"name": "Category Name", "description": "Why this category is needed based on what was talked about in the unmapped messages."}}
+                ],
+                "suggested_documents": [
+                    {{"title": "Document Title", "description": "What specific information this document must contain to fill the knowledge gap."}}
+                ]
+            }}
+            """
+
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are a helpful AI assistant that outputs strictly valid JSON. Never output null."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.3
+            )
+
+            content = response.choices[0].message.content
+            parsed_data = json.loads(content)
+
+            if not parsed_data:
+                return {
+                    "new_categories": [],
+                    "suggested_documents": [{"title": "No Clear Insights", "description": "The AI reviewed the messages but could not generate specific missing documents."}]
+                }
+
+            return parsed_data
+
+        except Exception as e:
+            print(f"DEBUG: Improvement Suggestion Error: {str(e)}")
+            return {
+                "new_categories": [],
+                "suggested_documents": [{"title": "Error generating insights", "description": str(e)}]
+            }
+
+    def recategorize_unmapped_messages(self):
+        """
+        Scans all user messages that are currently 'Uncategorized' and
+        attempts to classify them into the newly updated active categories.
+        """
+        print("DEBUG: Starting background recategorization process...")
+        try:
+            category_doc = self.categories_collection.find_one({"company_id": self.company_id})
+            user_categories = [cat['name'] for cat in category_doc.get('categories', [])] if category_doc else []
+
+            if not user_categories:
+                return 0
+
+            category_list_str = ", ".join(user_categories)
+
+            query = {
+                "company_id": self.company_id,
+                "messages": {
+                    "$elemMatch": {
+                        "role": "user",
+                        "category": {"$in": ["Uncategorized", None, ""]}
+                    }
+                }
+            }
+
+            docs = self.live_conversations_collection.find(query)
+            updated_count = 0
+
+            for doc in docs:
+                messages = doc.get("messages", [])
+                needs_db_update = False
+
+                for msg in messages:
+                    if msg.get("role") == "user" and msg.get("category") in ["Uncategorized", None, ""]:
+                        text = msg.get("content", "")
+
+                        prompt = f"""
+                        Analyze the following customer message and provide classification.
+
+                        Customer Message: "{text}"
+                        Available Categories: [{category_list_str}]
+
+                        Instructions:
+                        1. Select the most relevant category from the list. 
+                        2. If no categories are provided or the message doesn't fit, use "Uncategorized".
+
+                        Respond ONLY in valid JSON:
+                        {{
+                            "category": "Selected Category"
+                        }}
+                        """
+                        try:
+                            response = self.client.chat.completions.create(
+                                model=self.model_name,
+                                messages=[
+                                    {"role": "system",
+                                     "content": "You are a precise data classifier that outputs only valid JSON."},
+                                    {"role": "user", "content": prompt}
+                                ],
+                                response_format={"type": "json_object"},
+                                temperature=0.1
+                            )
+                            result = json.loads(response.choices[0].message.content)
+                            new_category = result.get("category")
+
+                            if new_category and new_category in user_categories:
+                                msg["category"] = new_category
+                                needs_db_update = True
+                                updated_count += 1
+
+                        except Exception as parse_e:
+                            print(f"DEBUG: Failed to classify msg: {parse_e}")
+
+                if needs_db_update:
+                    self.live_conversations_collection.update_one(
+                        {"_id": doc["_id"]},
+                        {"$set": {"messages": messages}}
+                    )
+
+            print(f"DEBUG: Recategorization complete. Successfully remapped {updated_count} messages.")
+            return updated_count
+
+        except Exception as e:
+            print(f"DEBUG: Recategorization Critical Error: {str(e)}")
+            return 0
