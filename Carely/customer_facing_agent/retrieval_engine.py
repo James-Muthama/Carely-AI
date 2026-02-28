@@ -6,10 +6,12 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
+
 class RetrievalEngine:
-    def __init__(self, vector_store, groq_api_key):
+    def __init__(self, vector_store, groq_api_key, model_name="llama-3.1-8b-instant"):
         self.vector_store = vector_store
         self.groq_api_key = groq_api_key
+        self.model_name = model_name  # Store the model name
         self.rag_chain = None
         self.compression_retriever = None
 
@@ -18,6 +20,7 @@ class RetrievalEngine:
         print("Setting up retriever...")
         try:
             base_retriever = self.vector_store.as_retriever(search_kwargs={"k": 10})
+            # Re-ranking remains the same
             model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
             compressor = CrossEncoderReranker(model=model, top_n=5)
             self.compression_retriever = ContextualCompressionRetriever(
@@ -29,8 +32,9 @@ class RetrievalEngine:
 
     def initialize_chain(self, history_getter_func):
         """Initializes the RAG chain."""
+        # UPDATED: Now uses the model_name passed during initialization
         llm = ChatGroq(
-            model_name="llama-3.1-8b-instant",
+            model_name=self.model_name,
             temperature=0.1,
             api_key=self.groq_api_key
         )
@@ -46,14 +50,14 @@ class RetrievalEngine:
             return "\n\n".join(doc.page_content for doc in docs)
 
         self.rag_chain = (
-            {
-                "context": self.compression_retriever | format_docs,
-                "question": RunnablePassthrough(),
-                "conversation_history": lambda x: history_getter_func()
-            }
-            | prompt
-            | llm
-            | StrOutputParser()
+                {
+                    "context": self.compression_retriever | format_docs,
+                    "question": RunnablePassthrough(),
+                    "conversation_history": lambda x: history_getter_func()
+                }
+                | prompt
+                | llm
+                | StrOutputParser()
         )
 
     def query(self, question):

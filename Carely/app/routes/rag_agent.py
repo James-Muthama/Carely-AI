@@ -176,7 +176,7 @@ def chat_interface():
         flash('Please upload a PDF document first', 'warning')
         return redirect(url_for('rag.upload_file'))
 
-    return render_template('chat.html',
+    return render_template('chat_interface.html',
                            uploaded_file=session.get('uploaded_filename'),
                            existing_documents=company_docs)
 
