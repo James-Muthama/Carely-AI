@@ -118,11 +118,39 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory and add your credentials:
 
 ```env
+# Flask Configuration
 FLASK_APP=run.py
 FLASK_ENV=development
-SECRET_KEY=your_secure_flask_secret_key
+app.secret_key=your_secure_flask_secret_key
+
+# MongoDB
 MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/Carely
-GROQ_API_KEY=gsk_your_groq_api_key_here
+MONGO_PWD="your_mongo_password"
+
+# Model API Keys
+GROQ_API_KEY="gsk_your_groq_api_key_here"
+
+# Encryption
+ENCRYPTION_KEY=your_encryption_key_here
+
+# reCAPTCHA Keys
+RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
+
+# Email Configuration
+EMAIL_ADDRESS="your_email@gmail.com"
+EMAIL_PASSWORD="your_gmail_app_password"
+
+# Google OAuth Configuration
+GOOGLE_OAUTH_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_PROJECT_ID=your_google_project_id
+
+# OAuth Configuration
+OAUTHLIB_INSECURE_TRANSPORT=1
+
+# MCP Server Configuration
+MCP_SERVER_URL=http://127.0.0.1:8000
 ```
 
 ### 5. Run the Application
